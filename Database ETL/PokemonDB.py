@@ -1,5 +1,7 @@
 #load libraries
 import pandas as pd
+import requests #requests.get()
+from bs4 import BeautifulSoup #soup.find() #BeautifulSoup()
 
 #DEF SCRAPE FUNCTIONS
 def get_request_response(url):
