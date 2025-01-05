@@ -2,11 +2,15 @@
 import pandas as pd
 
 #DEF SCRAPE FUNCTIONS
-def scrape_pokedex_data(url):
+def get_request_response(url):
   response = requests.get(url)
   if response.status_code != 200: #only status code that we accept
     raise Exception(f"Failed to load page {url}")
+  return response
 
+def scrape_pokedex_data(url):
+  response = get_request_response(url)
+  
   soup = BeautifulSoup(response.content, 'html.parser') #parse using BeautifulSoup
   table = soup.find('table', {'id': 'pokedex'}) #select table necessary
   
