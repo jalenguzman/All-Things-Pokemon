@@ -128,6 +128,29 @@ def get_special_pokemon(choice):
             return "Invalid Choice"
   return poke_list
 
+def get_pokemon_gen(PokedexNbr):
+  converted = int(PokedexNbr)
+
+  if(converted <= 151):
+    return 1
+  elif(converted <= 251):
+    return 2
+  elif(converted <= 386):
+    return 3
+  elif(converted <= 493):
+    return 4
+  elif(converted <= 649):
+    return 5
+  elif(converted <= 721):
+    return 6
+  elif(converted <= 809):
+    return 7
+  elif(converted <= 905):
+    return 8
+  elif(converted >= 1010):
+    return 9
+  else:
+    return "Invalid Pokedex Number"
 
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
