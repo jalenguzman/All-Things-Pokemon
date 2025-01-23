@@ -152,6 +152,17 @@ def get_pokemon_gen(PokedexNbr):
   else:
     return "Invalid Pokedex Number"
 
+def get_move_category(cat):
+  match cat:
+    case 'https://img.pokemondb.net/images/icons/move-special.png':
+      return 'Special'
+    case 'https://img.pokemondb.net/images/icons/move-status.png':
+      return 'Status'
+    case 'https://img.pokemondb.net/images/icons/move-physical.png':
+      return 'Physical'
+    case _:
+      return 'None'
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
