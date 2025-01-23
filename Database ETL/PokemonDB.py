@@ -89,7 +89,49 @@ def scrape_ability_data(url):
   df = pd.DataFrame(ability_data)
   return df
 
+def get_special_pokemon(choice):
+  match choice:
+        case 'Sublegendary':
+            poke_list = ['Articuno', 'Zapdos', 'Moltres',
+                     'Raikou', 'Entei', 'Suicine',
+                     'Regirock', 'Regice', 'Registeel', 'Regieleki', 'Regidrago',
+                     'Latias', 'Latios',
+                     'Uxie', 'Mesprit', 'Azelf'
+                     'Heatran', 'Regigigas', 'Cresselia',
+                     'Colbalion', 'Terrakion', 'Virizion', 'Silvally',
+                     'Tornadus', 'Thundurus', 'Landorus', 'Enamorus',
+                     'Tapu Koko', 'Tapu Lele', 'Tapu Bulu', 'Tapu Fini',
+                     'Kubfu', 'Urshifu', 'Glastrier', 'Spectrier',
+                     'Wo-Chien', 'Chien-Pao', 'Ting-Lu', 'Chi-Yu',
+                     'Okidogi', 'Munkidori', 'Fezandipiti', 'Ogerpon']
+
+        case 'Legendary':
+           poke_list = ['Mewtwo', 'Lugia', 'Ho-Oh', #Gen 1 and 2 Legendaries
+                     'Kyogre', 'Groudon', 'Rayquaza', #Gen 3
+                     'Dialga', 'Palkia', 'Giratina',  #Gen 4
+                     'Reshiram', 'Zekrom', 'Kyurem',  #Gen 5
+                     'Xerneas', 'Yveltal', 'Zygarde', #Gen 6
+                     'Cosmog', 'Cosmeom', 'Solgaleo', 'Lunala', 'Necrozma', #Gen 7
+                     'Zacian', 'Zamazenta', 'Eternatus', 'Calyrex', #Gen 8
+                     'Koraidon', 'Miraidon', 'Terapagos'] #Gen 9
+
+        case 'Mythical':
+            poke_list = ['Mew', 'Celebi', 'Jirachi', 'Deoxys',
+                    'Phione', 'Manaphy', 'Darkrai', 'Shaymin',
+                    'Arceus', 'Victini', 'Keldeo', 'Meloetta',
+                    'Genesect', 'Diancie', 'Hoopa', 'Volcanion',
+                    'Magearna', 'Marshadow', 'Zeraora', 'Meltan',
+                    'Melmetal', 'Zarude', 'Pecharunt']
+
+        # if match is not confirmed, use last case
+        case _:
+            return "Invalid Choice"
+  return poke_list
+
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
 abilities = scrape_ability_data('https://pokemondb.net/ability')
+
+
