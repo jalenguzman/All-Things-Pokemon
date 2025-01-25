@@ -251,6 +251,12 @@ def split_abilities(abilities):
     # Ensure the list has exactly 3 elements
     return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
 
+def transpose_df(df):
+    df = df.transpose()
+    df.columns = df.iloc[0] #set column names to values in row 1
+    df = df[1:] #remove row 1
+    return df
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
