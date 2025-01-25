@@ -232,6 +232,25 @@ def scrape_individual_page_data(url):
 
   return tables_dict
 
+# Function to split abilities into three columns
+def split_abilities(abilities):
+    # Pattern to match abilities
+    pattern = r"(\d\.\s*([^0-9]+?))(?=(?:\d\.\s*[^0-9])|$)"
+    matches = re.findall(pattern, abilities)
+    abilities_split = [match[1].strip() for match in matches]
+
+    # Split the second ability if it contains concatenated abilities
+    if len(abilities_split) > 1:
+        ability2 = abilities_split[1]
+        match = re.search(r'([a-z])([A-Z])', ability2)
+        if match:
+            split_idx = match.start(1) + 1
+            abilities_split[1] = ability2[:split_idx].strip()
+            abilities_split.append(ability2[split_idx:].strip())
+
+    # Ensure the list has exactly 3 elements
+    return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
