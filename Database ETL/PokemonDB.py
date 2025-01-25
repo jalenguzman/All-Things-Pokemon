@@ -257,6 +257,19 @@ def transpose_df(df):
     df = df[1:] #remove row 1
     return df
 
+def clean_pokedex_entry_data(df):
+    df = transpose_df(df)
+
+    df['Height'] = df['Height'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
+    df['Weight'] = df['Weight'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
+    #df[['Type1', 'Type2']] = df['Type'].str.split(' ')
+    df[['Ability1', 'Ability2', 'HiddenAbility']] = df['Abilities'].apply(split_abilities)
+    df['PokedexNbr'] = df['National №']
+
+    df = df[['PokedexNbr', 'Type', 'Species', 'Height', 'Weight',
+             'Ability1', 'Ability2', 'HiddenAbility']]
+    return df
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
