@@ -270,6 +270,19 @@ def clean_pokedex_entry_data(df):
              'Ability1', 'Ability2', 'HiddenAbility']]
     return df
 
+def clean_training_data(df):
+    df = transpose_df(df)
+    df['CatchRate'] = df['Catch rate'].str.split('(').str[0].replace('—', '0').astype(float)
+    df['BaseFriendship'] = df['Base Friendship'].str.split('(').str[0].replace('—', '0').astype(float)
+    df['BaseExp'] = df['Base Exp.'].replace('—', '0').astype(float)
+
+    df.rename(columns=
+    {'EV yield': 'EVYield',
+     'Growth Rate': 'GrowthRate'}, inplace=True)
+
+    df = df[['EVYield', 'CatchRate', 'BaseFriendship', 'BaseExp', 'GrowthRate']]
+    return df
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
