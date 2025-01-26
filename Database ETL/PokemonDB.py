@@ -283,6 +283,22 @@ def clean_training_data(df):
     df = df[['EVYield', 'CatchRate', 'BaseFriendship', 'BaseExp', 'GrowthRate']]
     return df
 
+def clean_breeding_data(df):
+    df = transpose_df(df)
+
+    if df['Gender'].str.contains('Genderless|—').any():
+      df['Male'] = 0
+      df['Female'] = 0
+    else:
+      df[['Male', 'Female']] = df['Gender'].str.split(',', expand=True)
+      df['Male'] = df['Male'].str.split('%').str[0].astype(float)
+      df['Female'] = df['Female'].str.split('%').str[0].astype(float)
+
+    df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
+
+    df = df[['Male', 'Female', 'EggCycles', 'Egg Groups']]
+    return df
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
