@@ -330,6 +330,20 @@ def clean_evolution_data(dict):
 
   return df
 
+def clean_move_data(dict):
+    res = {key: val for key, val in dict.items() if key.startswith('Move_Table_')}
+    data = []
+
+    for key in res:
+      temp = res[key]
+      temp = temp[1:]
+      if 'Move' in temp.columns:
+        data.append(temp['Move'])
+
+    df = pd.concat(data)
+    df = df.unique()
+    df = pd.DataFrame(df, columns = ['Move'])
+    return df
 
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
