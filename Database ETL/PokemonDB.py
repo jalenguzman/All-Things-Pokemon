@@ -300,6 +300,17 @@ def clean_breeding_data(df):
     df = df[['Male', 'Female', 'EggCycles', 'Egg Groups']]
     return df
 
+def clean_pokdex_flavor_text_data(dict):
+    if 'Pokédex entries' in dict: #check if entry exists, may not for scarlet/violet dlc exclusives
+      df = dict['Pokédex entries']
+
+      rows = len(df.index) - 1 #get max row in df (latest flavortext)
+      data = {'FlavorText': [df[1][rows]]} #select out max row as flavortext
+
+      return(pd.DataFrame(data))
+    else:
+      return None
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
