@@ -311,6 +311,26 @@ def clean_pokdex_flavor_text_data(dict):
     else:
       return None
 
+def clean_evolution_data(dict):
+  res = {key: val for key, val in dict.items() if key.startswith('Evolution_Table_')}
+  if res == {}: #if there is no evolution for the pokemon
+    return None
+
+  data = []
+  for key in res:
+    temp = res[key]
+    data.append(temp)
+
+  df = pd.concat(data)
+  df = pd.DataFrame(df)
+
+  df.columns = ['Pokemon', 'Evolution']
+  df['Evolution'] = df['Evolution'].shift(1)
+  df = df.groupby('Pokemon').first()
+
+  return df
+
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
