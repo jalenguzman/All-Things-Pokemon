@@ -345,6 +345,21 @@ def clean_move_data(dict):
     df = pd.DataFrame(df, columns = ['Move'])
     return df
 
+def clean_individual_page_data(tables_data):
+    artwork_url = pd.DataFrame([tables_data['Artwork']], columns = ['ArtURL'])
+    entry_data = clean_pokedex_entry_data(tables_data['Pokédex data']) #pokedex
+    training_data = clean_training_data(tables_data['Training']) #training
+    breeding_data = clean_breeding_data(tables_data['Breeding']) #breeding
+    flavor_text_data = clean_pokdex_flavor_text_data(tables_data) #flavor text
+    evolution_data = clean_evolution_data(tables_data) #evolution
+    move_data = clean_move_data(tables_data) #moves
+
+    #combine as needed for sql table storage
+    df = pd.concat([entry_data, training_data, breeding_data], axis = 1)
+    df = pd.concat([df.reset_index(drop=True), artwork_url, flavor_text_data], axis = 1)
+
+    return df, evolution_data, move_data
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
