@@ -381,4 +381,5 @@ pokedex['IsSubLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x f
 pokedex['IsMythical'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Mythical')) else False)
 pokedex['IsLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Legendary')) else False)
 
-
+#DATA AUGMENTING (MOVES)
+moves['Category'] = moves['Cat.'].apply(get_move_category)
