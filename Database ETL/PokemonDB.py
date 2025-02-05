@@ -383,3 +383,37 @@ pokedex['IsLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for 
 
 #DATA AUGMENTING (MOVES)
 moves['Category'] = moves['Cat.'].apply(get_move_category)
+
+#DATA CLEANING
+#for pokedex
+pokedex.rename(columns=
+    {'#': 'PokedexNbr', #more descriptive
+     'Name': 'PokemonName',
+     'Sp. Atk': 'SpAtk', #having the extra space will cause me trouble at some point
+     'Sp. Def': 'SpDef'}, inplace=True)
+
+pokedex = pokedex[['PokedexNbr', 'PokemonName', 'Subname', 'Type1', 'Type2',
+                   'Total', 'HP', 'Attack', 'Defense', 'SpAtk', 'SpDef', 'Speed',
+                   'Gen', 'IsMega', 'IsRegionVariant', 'IsAdditionalVariant',
+                   'IsSubLegendary', 'IsMythical', 'IsLegendary']] #reorder and select
+
+#for abilities
+abilities.rename(columns =
+     {'Name': 'AbilityName',
+      'Description': 'AbilityDesc',
+      'Gen.': 'IntroGen'}, inplace = True)
+      
+abilities = abilities[['AbilityName', 'AbilityDesc', 'IntroGen']]
+
+moves.rename(columns =
+    {'Name': 'MoveName',
+     'Type': 'MoveType',
+     'Power': 'MovePower',
+     'Acc.': 'MoveAccuracy',
+     'PP': 'MovePowerPoints',
+     'Effect': 'MoveDesc',
+     'Prob. (%)': 'EffectProbability'}, inplace = True)
+
+moves = moves[['MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
+               'MovePowerPoints', 'MoveDesc', 'EffectProbability']]
+
