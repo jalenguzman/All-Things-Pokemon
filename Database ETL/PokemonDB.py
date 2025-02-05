@@ -365,4 +365,20 @@ pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
 abilities = scrape_ability_data('https://pokemondb.net/ability')
 
+#DATA AUGMENTING (POKEDEX)
+pokedex[['Type1', 'Type2']] = pokedex['Type'].str.split(' ', expand=True, n=1) #split into two columns
+pokedex['Gen'] = pokedex['#'].apply(get_pokemon_gen) #pokemon generation
+
+#Add True or False Columns
+pokedex['IsMega'] = pokedex['Subname'].str.contains('Mega', case=False, na=False) #megas
+pokedex['IsRegionVariant'] = pokedex['Subname'].str.contains('Galarian|Alolan|Hisuian|Paldean', case=False, na=False) #regional variants
+pokedex['IsAdditionalVariant'] = pokedex['IsAdditionalVariant'] = (pokedex['Subname'].str.contains('None') == False) & \
+                                 (pokedex['IsMega'] == False) & \
+                                 (pokedex['IsRegionVariant'] == False) #additional variants
+
+#different types of special/legendary pokemon
+pokedex['IsSubLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Sublegendary')) else False)
+pokedex['IsMythical'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Mythical')) else False)
+pokedex['IsLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Legendary')) else False)
+
 
