@@ -3,6 +3,7 @@ import pandas as pd
 import requests #requests.get()
 from bs4 import BeautifulSoup #soup.find() #BeautifulSoup()
 import re #re.findall() #re.search()
+import itertools #itertools.product()
 
 #DEF SCRAPE FUNCTIONS
 def get_request_response(url):
@@ -416,4 +417,62 @@ moves.rename(columns =
 
 moves = moves[['MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
                'MovePowerPoints', 'MoveDesc', 'EffectProbability']]
+
+
+#create fact table for different Pokemon Types
+type_ids = {
+    "Normal": 1,
+    "Fire": 2,
+    "Water": 3,
+    "Electric": 4,
+    "Grass": 5,
+    "Ice": 6,
+    "Fighting": 7,  
+    "Poison": 8,
+    "Ground": 9,  
+    "Flying": 10, 
+    "Psychic": 11, 
+    "Bug": 12,
+    "Rock": 13, 
+    "Ghost": 14, 
+    "Dragon": 15, 
+    "Dark": 16,
+    "Steel": 17, 
+    "Fairy": 18
+}
+
+#listing out any type effectiveness interactions that aren't 1-1 into a dictionary
+effectiveness = {
+    "Normal": {"Rock": 0.5, "Ghost": 0, "Steel": 0.5},
+    "Fire": {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 2, "Bug": 2, "Rock": 0.5, "Dragon": 0.5, "Steel": 2},
+    "Water": {"Fire": 2, "Water": 0.5, "Grass": 0.5, "Ground": 2, "Rock": 2, "Dragon": 0.5},
+    "Electric": {"Water": 2, "Electric": 0.5, "Grass": 0.5, "Ground": 0, "Flying": 2, "Dragon": 0.5},
+    "Grass": {"Fire": 0.5, "Water": 2, "Grass": 0.5, "Poison": 0.5, "Ground": 2, "Flying": 0.5, "Bug": 0.5, "Rock": 2, "Dragon": 0.5, "Steel": 0.5},
+    "Ice": {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 0.5, "Ground": 2, "Flying": 2, "Dragon": 2, "Steel": 0.5},
+    "Fighting": {"Normal": 2, "Ice": 2, "Rock": 2, "Dark": 2, "Steel": 2, "Poison": 0.5, "Flying": 0.5, "Psychic": 0.5, "Bug": 0.5, "Ghost": 0},
+    "Poison": {"Grass": 2, "Poison": 0.5, "Ground": 0.5, "Rock": 0.5, "Ghost": 0.5, "Steel": 0, "Fairy": 2},
+    "Ground": {"Fire": 2, "Electric": 2, "Poison": 2, "Rock": 2, "Steel": 2, "Grass": 0.5, "Bug": 0.5, "Flying": 0},
+    "Flying": {"Grass": 2, "Fighting": 2, "Bug": 2, "Electric": 0.5, "Rock": 0.5, "Steel": 0.5},
+    "Psychic": {"Fighting": 2, "Poison": 2, "Psychic": 0.5, "Steel": 0.5, "Dark": 0},
+    "Bug": {"Grass": 2, "Psychic": 2, "Dark": 2, "Fire": 0.5, "Fighting": 0.5, "Poison": 0.5, "Flying": 0.5, "Ghost": 0.5, "Steel": 0.5, "Fairy": 0.5},
+    "Rock": {"Fire": 2, "Ice": 2, "Flying": 2, "Bug": 2, "Fighting": 0.5, "Ground": 0.5, "Steel": 0.5},
+    "Ghost": {"Psychic": 2, "Ghost": 2, "Normal": 0},
+    "Dragon": {"Dragon": 2, "Steel": 0.5, "Fairy": 0},
+    "Dark": {"Psychic": 2, "Ghost": 2, "Fighting": 0.5, "Dark": 0.5, "Fairy": 0.5},
+    "Steel": {"Ice": 2, "Rock": 2, "Fairy": 2, "Fire": 0.5, "Water": 0.5, "Electric": 0.5, "Steel": 0.5},
+    "Fairy": {"Fighting": 2, "Dragon": 2, "Dark": 2, "Fire": 0.5, "Poison": 0.5, "Steel": 0.5}
+}
+
+#Create the type effectivness
+type_effectiveness = pd.DataFrame([ #convert results to df
+    {
+        "TypeEffectivenessId": idx + 1,
+        "AttackingTypeId": type_ids[atk],
+        "DefendingTypeId": type_ids[defn],
+        "Effectiveness": effectiveness.get(atk, {}).get(defn, 1)
+    }
+    
+    #iterate through all possible pairs of attacking - defending types
+    for idx, (atk, defn) in enumerate(itertools.product(type_ids.keys(), repeat=2))
+])
 
