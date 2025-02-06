@@ -149,7 +149,7 @@ def get_pokemon_gen(PokedexNbr):
     return 7
   elif(converted <= 905):
     return 8
-  elif(converted >= 1010):
+  elif(converted >= 906):
     return 9
   else:
     return "Invalid Pokedex Number"
