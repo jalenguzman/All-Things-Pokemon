@@ -369,6 +369,7 @@ abilities = scrape_ability_data('https://pokemondb.net/ability')
 #DATA AUGMENTING (POKEDEX)
 pokedex[['Type1', 'Type2']] = pokedex['Type'].str.split(' ', expand=True, n=1) #split into two columns
 pokedex['Gen'] = pokedex['#'].apply(get_pokemon_gen) #pokemon generation
+pokedex['PokedexRowId'] = pokedex.index + 1
 
 #Add True or False Columns
 pokedex['IsMega'] = pokedex['Subname'].str.contains('Mega', case=False, na=False) #megas
@@ -384,6 +385,10 @@ pokedex['IsLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for 
 
 #DATA AUGMENTING (MOVES)
 moves['Category'] = moves['Cat.'].apply(get_move_category)
+moves['MoveRowId'] = moves.index + 1
+
+#DATA AUGMENTING (ABILITIES)
+abilities['AbilityRowId'] = abilities.index + 1
 
 #DATA CLEANING
 #for pokedex
@@ -393,7 +398,7 @@ pokedex.rename(columns=
      'Sp. Atk': 'SpAtk', #having the extra space will cause me trouble at some point
      'Sp. Def': 'SpDef'}, inplace=True)
 
-pokedex = pokedex[['PokedexNbr', 'PokemonName', 'Subname', 'Type1', 'Type2',
+pokedex = pokedex[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'Type1', 'Type2',
                    'Total', 'HP', 'Attack', 'Defense', 'SpAtk', 'SpDef', 'Speed',
                    'Gen', 'IsMega', 'IsRegionVariant', 'IsAdditionalVariant',
                    'IsSubLegendary', 'IsMythical', 'IsLegendary']] #reorder and select
@@ -404,7 +409,7 @@ abilities.rename(columns =
       'Description': 'AbilityDesc',
       'Gen.': 'IntroGen'}, inplace = True)
       
-abilities = abilities[['AbilityName', 'AbilityDesc', 'IntroGen']]
+abilities = abilities[['AbilityRowId', 'AbilityName', 'AbilityDesc', 'IntroGen']]
 
 moves.rename(columns =
     {'Name': 'MoveName',
@@ -415,7 +420,7 @@ moves.rename(columns =
      'Effect': 'MoveDesc',
      'Prob. (%)': 'EffectProbability'}, inplace = True)
 
-moves = moves[['MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
+moves = moves[['MoveRowid', 'MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
                'MovePowerPoints', 'MoveDesc', 'EffectProbability']]
 
 
