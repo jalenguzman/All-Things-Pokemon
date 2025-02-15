@@ -438,8 +438,9 @@ def create_base_stats_table(pokedex):
   
   return base_stats
 
-#create fact table for different Pokemon Types
-type_ids = {
+def get_type_ids():
+  #create fact table for different Pokemon Types
+  type_ids = {
     "Normal": 1,
     "Fire": 2,
     "Water": 3,
