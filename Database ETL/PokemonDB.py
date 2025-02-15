@@ -423,6 +423,14 @@ moves.rename(columns =
 moves = moves[['MoveRowid', 'MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
                'MovePowerPoints', 'MoveDesc', 'EffectProbability']]
 
+#create move category table
+move_category = pd.DataFrame()
+move_category['MoveCategoryDesc'] = moves['Category'].unique()
+move_category = move_category.sort_values(by = 'MoveCategoryDesc')
+move_category['MoveCategoryId'] = range(len(move_category))
+
+#create the base stats table
+base_stats = pokedex[['PokedexRowId', 'HP', 'Atk', 'Def', 'SpAtk', 'SpDef', 'Speed', 'Total']]
 
 #create fact table for different Pokemon Types
 type_ids = {
