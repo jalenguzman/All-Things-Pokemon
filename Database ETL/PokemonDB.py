@@ -298,6 +298,7 @@ def clean_breeding_data(df):
 
     df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
     df[['EggGroup1', 'EggGroup2']] = df['Egg Groups'].str.split(',', expand = True).reindex([0, 1], axis=1)
+    df['EggGroup2'] = df['EggGroup2'].str.strip() #trim whitespace
 
     df = df[['MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
     return df
