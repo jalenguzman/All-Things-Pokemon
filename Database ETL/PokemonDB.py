@@ -459,44 +459,101 @@ def get_type_ids():
     "Dark": 16,
     "Steel": 17, 
     "Fairy": 18
-}
+  }
+  
+  return type_ids
+  
+def create_type_table():
+  type_ids = get_type_ids()
+  types = pd.DataFrame(list(type_ids.items()), columns=['TypeName', 'TypeId'])
+  
+  return types
+  
+def create_type_effectiveness_table():
+  type_ids = get_type_ids()
+  
+  #listing out any type effectiveness interactions that aren't 1-1 into a dictionary
+  effectiveness = {
+      "Normal": {"Rock": 0.5, "Ghost": 0, "Steel": 0.5},
+      "Fire": {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 2, "Bug": 2, "Rock": 0.5, "Dragon": 0.5, "Steel": 2},
+      "Water": {"Fire": 2, "Water": 0.5, "Grass": 0.5, "Ground": 2, "Rock": 2, "Dragon": 0.5},
+      "Electric": {"Water": 2, "Electric": 0.5, "Grass": 0.5, "Ground": 0, "Flying": 2, "Dragon": 0.5},
+      "Grass": {"Fire": 0.5, "Water": 2, "Grass": 0.5, "Poison": 0.5, "Ground": 2, "Flying": 0.5, "Bug": 0.5, "Rock": 2, "Dragon": 0.5, "Steel": 0.5},
+      "Ice": {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 0.5, "Ground": 2, "Flying": 2, "Dragon": 2, "Steel": 0.5},
+      "Fighting": {"Normal": 2, "Ice": 2, "Rock": 2, "Dark": 2, "Steel": 2, "Poison": 0.5, "Flying": 0.5, "Psychic": 0.5, "Bug": 0.5, "Ghost": 0},
+      "Poison": {"Grass": 2, "Poison": 0.5, "Ground": 0.5, "Rock": 0.5, "Ghost": 0.5, "Steel": 0, "Fairy": 2},
+      "Ground": {"Fire": 2, "Electric": 2, "Poison": 2, "Rock": 2, "Steel": 2, "Grass": 0.5, "Bug": 0.5, "Flying": 0},
+      "Flying": {"Grass": 2, "Fighting": 2, "Bug": 2, "Electric": 0.5, "Rock": 0.5, "Steel": 0.5},
+      "Psychic": {"Fighting": 2, "Poison": 2, "Psychic": 0.5, "Steel": 0.5, "Dark": 0},
+      "Bug": {"Grass": 2, "Psychic": 2, "Dark": 2, "Fire": 0.5, "Fighting": 0.5, "Poison": 0.5, "Flying": 0.5, "Ghost": 0.5, "Steel": 0.5, "Fairy": 0.5},
+      "Rock": {"Fire": 2, "Ice": 2, "Flying": 2, "Bug": 2, "Fighting": 0.5, "Ground": 0.5, "Steel": 0.5},
+      "Ghost": {"Psychic": 2, "Ghost": 2, "Normal": 0},
+      "Dragon": {"Dragon": 2, "Steel": 0.5, "Fairy": 0},
+      "Dark": {"Psychic": 2, "Ghost": 2, "Fighting": 0.5, "Dark": 0.5, "Fairy": 0.5},
+      "Steel": {"Ice": 2, "Rock": 2, "Fairy": 2, "Fire": 0.5, "Water": 0.5, "Electric": 0.5, "Steel": 0.5},
+      "Fairy": {"Fighting": 2, "Dragon": 2, "Dark": 2, "Fire": 0.5, "Poison": 0.5, "Steel": 0.5}
+  }
+  
+  #Create the type effectivness
+  type_effectiveness = pd.DataFrame([ #convert results to df
+      {
+          "TypeEffectivenessId": idx + 1,
+          "AttackingTypeId": type_ids[atk],
+          "DefendingTypeId": type_ids[defn],
+          "Effectiveness": effectiveness.get(atk, {}).get(defn, 1)
+      }
+      
+      #iterate through all possible pairs of attacking - defending types
+      for idx, (atk, defn) in enumerate(itertools.product(type_ids.keys(), repeat=2))
+  ])
+  
+  return type_effectiveness
 
-types = pd.DataFrame(list(type_ids.items()), columns=['TypeName', 'TypeId'])
+def create_breeding_table(individual_entries):
+  breeding = individual_entries[['MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
+  return breeding
 
-#listing out any type effectiveness interactions that aren't 1-1 into a dictionary
-effectiveness = {
-    "Normal": {"Rock": 0.5, "Ghost": 0, "Steel": 0.5},
-    "Fire": {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 2, "Bug": 2, "Rock": 0.5, "Dragon": 0.5, "Steel": 2},
-    "Water": {"Fire": 2, "Water": 0.5, "Grass": 0.5, "Ground": 2, "Rock": 2, "Dragon": 0.5},
-    "Electric": {"Water": 2, "Electric": 0.5, "Grass": 0.5, "Ground": 0, "Flying": 2, "Dragon": 0.5},
-    "Grass": {"Fire": 0.5, "Water": 2, "Grass": 0.5, "Poison": 0.5, "Ground": 2, "Flying": 0.5, "Bug": 0.5, "Rock": 2, "Dragon": 0.5, "Steel": 0.5},
-    "Ice": {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 0.5, "Ground": 2, "Flying": 2, "Dragon": 2, "Steel": 0.5},
-    "Fighting": {"Normal": 2, "Ice": 2, "Rock": 2, "Dark": 2, "Steel": 2, "Poison": 0.5, "Flying": 0.5, "Psychic": 0.5, "Bug": 0.5, "Ghost": 0},
-    "Poison": {"Grass": 2, "Poison": 0.5, "Ground": 0.5, "Rock": 0.5, "Ghost": 0.5, "Steel": 0, "Fairy": 2},
-    "Ground": {"Fire": 2, "Electric": 2, "Poison": 2, "Rock": 2, "Steel": 2, "Grass": 0.5, "Bug": 0.5, "Flying": 0},
-    "Flying": {"Grass": 2, "Fighting": 2, "Bug": 2, "Electric": 0.5, "Rock": 0.5, "Steel": 0.5},
-    "Psychic": {"Fighting": 2, "Poison": 2, "Psychic": 0.5, "Steel": 0.5, "Dark": 0},
-    "Bug": {"Grass": 2, "Psychic": 2, "Dark": 2, "Fire": 0.5, "Fighting": 0.5, "Poison": 0.5, "Flying": 0.5, "Ghost": 0.5, "Steel": 0.5, "Fairy": 0.5},
-    "Rock": {"Fire": 2, "Ice": 2, "Flying": 2, "Bug": 2, "Fighting": 0.5, "Ground": 0.5, "Steel": 0.5},
-    "Ghost": {"Psychic": 2, "Ghost": 2, "Normal": 0},
-    "Dragon": {"Dragon": 2, "Steel": 0.5, "Fairy": 0},
-    "Dark": {"Psychic": 2, "Ghost": 2, "Fighting": 0.5, "Dark": 0.5, "Fairy": 0.5},
-    "Steel": {"Ice": 2, "Rock": 2, "Fairy": 2, "Fire": 0.5, "Water": 0.5, "Electric": 0.5, "Steel": 0.5},
-    "Fairy": {"Fighting": 2, "Dragon": 2, "Dark": 2, "Fire": 0.5, "Poison": 0.5, "Steel": 0.5}
-}
+def create_egg_group_table(breeding):
+  #get distinct egg groups
+  egg_groups = pd.unique(breeding[['EggGroup1', 'EggGroup2']].values.ravel('K'))
+  
+  egg_groups = pd.DataFrame(data = egg_groups, columns = ['EggGroupDesc'])
+  egg_groups = egg_groups.sort_values(by = 'EggGroupDesc', na_position = 'first')
+  egg_groups['EggGroupId'] = range(len(egg_groups))
+  
+  return egg_groups
 
-#Create the type effectivness
-type_effectiveness = pd.DataFrame([ #convert results to df
-    {
-        "TypeEffectivenessId": idx + 1,
-        "AttackingTypeId": type_ids[atk],
-        "DefendingTypeId": type_ids[defn],
-        "Effectiveness": effectiveness.get(atk, {}).get(defn, 1)
-    }
-    
-    #iterate through all possible pairs of attacking - defending types
-    for idx, (atk, defn) in enumerate(itertools.product(type_ids.keys(), repeat=2))
-])
+def create_training_table(individual_entries):
+  training = individual_entries[['CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate', 'EVYield']]
+  
+  #convert EVYield into separate columns
+  #create dictionary to match stat names to column names
+  stat_mapping = {
+    'HP': 'HPYield',
+    'Attack': 'AtkYield',
+    'Defense': 'DefYield',
+    'Sp. Atk': 'SpAtkYield',
+    'Sp. Def': 'SpDefYield',
+    'Speed': 'SpdYield'
+  }
+  
+  return training
+
+
+#call comprehensive scrape functions
+pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
+moves = scrape_move_data('https://pokemondb.net/move/all')
+abilities = scrape_ability_data('https://pokemondb.net/ability')
+
+pokedex = augment_pokedex_data(pokedex)
+moves = augment_move_data(moves)
+abilities = augment_ability_data(abilities)
+
+move_category = create_move_category_table(moves)
+base_stats = create_base_stats_table(pokedex)
+
+types = create_type_table()
+type_effectiveness = create_type_effectiveness_table()
 
 #dictionary of dictionaries storage
 individual_pages = {}
