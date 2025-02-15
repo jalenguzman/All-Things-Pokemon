@@ -325,18 +325,31 @@ def transpose_df(df):
     df = df[1:] #remove row 1
     return df
 
-def clean_pokedex_entry_data(df):
+def clean_pokedex_entry_data(dict):
+  #predefine columns wanted in the ending df
+  column_names = ['Name', 'PokedexNbr', 'Type', 'Species', 'Height', 'Weight', 'Ability1', 'Ability2', 'HiddenAbility']
+  main_df = pd.DataFrame(columns = column_names) #create empty df to append to
+  
+  #for every form at a single pokedex number
+  for key in dict['Forms']:
+    
+    # if there is no form information in the key
+    if bool(dict['Forms'][key]) == False: 
+      continue #skip to next for loop iteration
+    
+    df = dict['Forms'][key]['Pokédex data']
     df = transpose_df(df)
-
+    
+    df['Name'] = key
     df['Height'] = df['Height'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
     df['Weight'] = df['Weight'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
-    #df[['Type1', 'Type2']] = df['Type'].str.split(' ')
     df[['Ability1', 'Ability2', 'HiddenAbility']] = df['Abilities'].apply(split_abilities)
     df['PokedexNbr'] = df['National №']
-
-    df = df[['PokedexNbr', 'Type', 'Species', 'Height', 'Weight',
-             'Ability1', 'Ability2', 'HiddenAbility']]
-    return df
+    
+    df = df[column_names]
+    main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)]) #astype used to prevent future warning error
+  
+  return main_df
 
 def clean_training_data(df):
     df = transpose_df(df)
@@ -416,7 +429,7 @@ def clean_move_data(dict):
 
 def clean_individual_page_data(tables_data):
     artwork_url = pd.DataFrame([tables_data['Artwork']], columns = ['ArtURL'])
-    entry_data = clean_pokedex_entry_data(tables_data['Pokédex data']) #pokedex
+    entry_data = clean_pokedex_entry_data(tables_data) #pokedex
     training_data = clean_training_data(tables_data['Training']) #training
     breeding_data = clean_breeding_data(tables_data['Breeding']) #breeding
     flavor_text_data = clean_pokdex_flavor_text_data(tables_data) #flavor text
