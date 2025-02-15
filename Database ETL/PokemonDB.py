@@ -517,6 +517,13 @@ individual_entries = pd.concat(individual_entries)
 
 #create breeding table
 breeding = individual_entries[['MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
+
 #get distinct egg groups
-#create training table
+egg_groups = pd.unique(breeding[['EggGroup1', 'EggGroup2']].values.ravel('K'))
+
+egg_groups = pd.DataFrame(data = egg_groups, columns = ['EggGroupDesc'])
+egg_groups = egg_groups.sort_values(by = 'EggGroupDesc', na_position = 'first')
+egg_groups['EggGroupId'] = range(len(egg_groups))
+
+
 
