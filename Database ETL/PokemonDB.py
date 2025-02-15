@@ -184,6 +184,141 @@ def split_abilities(abilities):
     # Ensure the list has exactly 3 elements
     return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
 
+def scrape_forms_data(soup):
+    form_tab_container = soup.find('div', {'class': 'tabset-basics'})
+    form_tabs = form_tab_container.select('a.sv-tabs-tab') if form_tab_container else []
+    form_data = {}
+
+    for tab in form_tabs:
+        form_name = tab.text.strip()
+        form_id = tab['href'].replace('#', '')  # e.g., 'tab-basic-475'
+        form_div = soup.find('div', {'id': form_id})
+
+        if not form_div:
+            continue  # Skip if the form's div is not found
+
+        # Scrape data for this form
+        form_tables = {}
+        headers_of_interest = ["Pokédex data", "Training", "Breeding", "Pokédex entries"]
+        headers = form_div.find_all(['h2', 'h3'])
+
+        for header in headers:
+            header_text = header.text.strip()
+            if header_text in headers_of_interest:
+                table = header.find_next('table')
+                if table:
+                    rows = table.find_all('tr')
+                    table_data = []
+                    for row in rows:
+                        cells = row.find_all(['td', 'th'])
+                        cell_data = [cell.text.strip() for cell in cells]
+                        table_data.append(cell_data)
+                    # Ensure all rows have the same number of columns
+                    max_columns = max(len(row) for row in table_data)
+                    table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
+                    df = pd.DataFrame(table_data)
+                    form_tables[header_text] = df
+
+        # Store the form's data
+        form_data[form_name] = form_tables
+
+    return form_data
+
+def scrape_evolution_data(soup):
+    """Scrape evolution chain data for the Pokémon."""
+    evo_tables = soup.find_all('div', {'class': 'infocard-list-evo'})
+    evolution_chains = []
+
+    for evo_table in evo_tables:
+        chain = []
+        elements = evo_table.find_all(['div', 'span'], recursive=False)
+
+        for element in elements:
+            if 'infocard' in element.get('class', []):
+                # Extract Pokémon data
+                pokemon_name_tag = element.find('a', {'class': 'ent-name'})
+                pokemon_name = pokemon_name_tag.text.strip() if pokemon_name_tag else 'Unknown'
+
+                pokemon_number_tag = element.find('small')
+                pokemon_number = pokemon_number_tag.text.strip() if pokemon_number_tag else 'Unknown'
+
+                pokemon_types = [a.text.strip() for a in element.find_all('a', {'class': 'itype'})]
+                chain.append({
+                    'Pokémon': pokemon_name,
+                    'Number': pokemon_number,
+                    'Types': pokemon_types,
+                    'Condition': None  # Default, will be updated if an arrow follows
+                })
+            elif 'infocard-arrow' in element.get('class', []):
+                # Extract evolution condition
+                condition = element.text.strip()
+                if chain:  # Attach condition to the previous Pokémon in the chain
+                    chain[-1]['Condition'] = condition
+
+        evolution_chains.append(chain)
+
+    return evolution_chains
+
+def scrape_moves_data(soup):
+    move_tab_container = soup.find('div', {'class': 'tabset-moves-game sv-tabs-wrapper'})
+    move_tabs = move_tab_container.select('a.sv-tabs-tab') if move_tab_container else []
+    move_data = {}
+
+    for tab in move_tabs:
+        tab_name = tab.text.strip()
+        tab_id = tab['href'].replace('#', '')  # e.g., 'tab-moves-21'
+        tab_div = soup.find('div', {'id': tab_id})
+
+        if not tab_div:
+            continue  # Skip if the tab's div is not found
+
+        # Scrape move tables for this tab
+        move_tables = []
+        tables = tab_div.find_all('table', {'class': 'data-table'})
+
+        for table in tables:
+            headers = [header.text.strip() for header in table.find_all('th')]
+            rows = table.find_all('tr')
+            table_data = []
+            for row in rows:
+                cells = row.find_all(['td', 'th'])
+                cell_data = []
+                for cell in cells:
+                    img = cell.find('img')
+                    if img:
+                        cell_data.append(img['src'])
+                    else:
+                        cell_data.append(cell.text.strip())
+                table_data.append(cell_data)
+            df = pd.DataFrame(table_data, columns=headers if headers else None)
+            move_tables.append(df)
+
+        # Store the move data for this tab
+        move_data[tab_name] = move_tables
+
+    return move_data
+
+def scrape_individual_page_data(url):
+    response = get_request_response(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    tables_dict = {}
+
+    # Extract artwork URL
+    img_tag = soup.find('img', {'alt': re.compile(r'.artwork')})
+    img_url = img_tag['src'] if img_tag else None
+    tables_dict['Artwork'] = img_url
+
+    # Scrape forms data
+    tables_dict['Forms'] = scrape_forms_data(soup)
+
+    # Scrape evolution data
+    tables_dict['Evolution_Chains'] = scrape_evolution_data(soup)
+
+    # Scrape moves data
+    tables_dict['Moves'] = scrape_moves_data(soup)
+
+    return tables_dict
+
 def transpose_df(df):
     df = df.transpose()
     df.columns = df.iloc[0] #set column names to values in row 1
