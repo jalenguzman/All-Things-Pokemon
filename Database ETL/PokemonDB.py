@@ -289,16 +289,17 @@ def clean_breeding_data(df):
     df = transpose_df(df)
 
     if df['Gender'].str.contains('Genderless|—').any():
-      df['Male'] = 0
-      df['Female'] = 0
+      df['MalePerc'] = 0
+      df['FemalePerc'] = 0
     else:
-      df[['Male', 'Female']] = df['Gender'].str.split(',', expand=True)
-      df['Male'] = df['Male'].str.split('%').str[0].astype(float)
-      df['Female'] = df['Female'].str.split('%').str[0].astype(float)
+      df[['MalePerc', 'FemalePerc']] = df['Gender'].str.split(',', expand=True)
+      df['MalePerc'] = df['MalePerc'].str.split('%').str[0].astype(float)
+      df['FemalePerc'] = df['FemalePerc'].str.split('%').str[0].astype(float)
 
     df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
+    df[['EggGroup1', 'EggGroup2']] = df['Egg Groups'].str.split(',', expand = True).reindex([0, 1], axis=1)
 
-    df = df[['Male', 'Female', 'EggCycles', 'Egg Groups']]
+    df = df[['MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
     return df
 
 def clean_pokdex_flavor_text_data(dict):
