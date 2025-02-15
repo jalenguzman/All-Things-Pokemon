@@ -363,45 +363,34 @@ def clean_individual_page_data(tables_data):
 
     return df, evolution_data, move_data
 
-#call comprehensive scrape functions
-pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
-moves = scrape_move_data('https://pokemondb.net/move/all')
-abilities = scrape_ability_data('https://pokemondb.net/ability')
-
-#DATA AUGMENTING (POKEDEX)
-pokedex[['Type1', 'Type2']] = pokedex['Type'].str.split(' ', expand=True, n=1) #split into two columns
-pokedex['Gen'] = pokedex['#'].apply(get_pokemon_gen) #pokemon generation
-pokedex['PokedexRowId'] = pokedex.index + 1
-
-#Add True or False Columns
-pokedex['IsMega'] = pokedex['Subname'].str.contains('Mega', case=False, na=False) #megas
-pokedex['IsRegionVariant'] = pokedex['Subname'].str.contains('Galarian|Alolan|Hisuian|Paldean', case=False, na=False) #regional variants
-pokedex['IsAdditionalVariant'] = pokedex['IsAdditionalVariant'] = (pokedex['Subname'].str.contains('None') == False) & \
-                                 (pokedex['IsMega'] == False) & \
-                                 (pokedex['IsRegionVariant'] == False) #additional variants
-
-#different types of special/legendary pokemon
-pokedex['IsSubLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Sublegendary')) else False)
-pokedex['IsMythical'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Mythical')) else False)
-pokedex['IsLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Legendary')) else False)
-
-#DATA AUGMENTING (MOVES)
-moves['Category'] = moves['Cat.'].apply(get_move_category)
-moves['MoveRowId'] = moves.index + 1
-
-#DATA AUGMENTING (ABILITIES)
-abilities['AbilityRowId'] = abilities.index + 1
-
-#DATA CLEANING
-#for pokedex
-pokedex.rename(columns=
+def augment_pokedex_data(pokedex):
+  pokedex[['Type1', 'Type2']] = pokedex['Type'].str.split(' ', expand=True, n=1) #split into two columns
+  pokedex['Gen'] = pokedex['#'].apply(get_pokemon_gen) #pokemon generation
+  pokedex['PokedexRowId'] = pokedex.index + 1
+  
+  #Add True or False Columns
+  pokedex['IsMega'] = pokedex['Subname'].str.contains('Mega', case=False, na=False) #megas
+  pokedex['IsRegionVariant'] = pokedex['Subname'].str.contains('Galarian|Alolan|Hisuian|Paldean', case=False, na=False) #regional variants
+  pokedex['IsAdditionalVariant'] = pokedex['IsAdditionalVariant'] = (pokedex['Subname'].str.contains('None') == False) & \
+                                   (pokedex['IsMega'] == False) & \
+                                   (pokedex['IsRegionVariant'] == False) #additional variants
+  
+  #different types of special/legendary pokemon
+  pokedex['IsSubLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Sublegendary')) else False)
+  pokedex['IsMythical'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Mythical')) else False)
+  pokedex['IsLegendary'] = pokedex['Name'].apply(lambda x: True if any(i in x for i in get_special_pokemon('Legendary')) else False)
+  
+  #renaming columns for pokedex
+  pokedex.rename(columns=
     {'#': 'PokedexNbr', #more descriptive
      'Name': 'PokemonName',
+     'Attack': 'Atk',
+     'Defense': 'Def',
      'Sp. Atk': 'SpAtk', #having the extra space will cause me trouble at some point
      'Sp. Def': 'SpDef'}, inplace=True)
 
-pokedex = pokedex[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'Type1', 'Type2',
-                   'Total', 'HP', 'Attack', 'Defense', 'SpAtk', 'SpDef', 'Speed',
+  pokedex = pokedex[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'Type1', 'Type2',
+                   'Total', 'HP', 'Atk', 'Def', 'SpAtk', 'SpDef', 'Speed',
                    'Gen', 'IsMega', 'IsRegionVariant', 'IsAdditionalVariant',
                    'IsSubLegendary', 'IsMythical', 'IsLegendary']] #reorder and select
 
