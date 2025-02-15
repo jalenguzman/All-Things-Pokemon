@@ -454,6 +454,8 @@ type_ids = {
     "Fairy": 18
 }
 
+types = pd.DataFrame(list(type_ids.items()), columns=['TypeName', 'TypeId'])
+
 #listing out any type effectiveness interactions that aren't 1-1 into a dictionary
 effectiveness = {
     "Normal": {"Rock": 0.5, "Ghost": 0, "Steel": 0.5},
