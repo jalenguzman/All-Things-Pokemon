@@ -394,13 +394,7 @@ def augment_pokedex_data(pokedex):
                    'Gen', 'IsMega', 'IsRegionVariant', 'IsAdditionalVariant',
                    'IsSubLegendary', 'IsMythical', 'IsLegendary']] #reorder and select
 
-#for abilities
-abilities.rename(columns =
-     {'Name': 'AbilityName',
-      'Description': 'AbilityDesc',
-      'Gen.': 'IntroGen'}, inplace = True)
-      
-abilities = abilities[['AbilityRowId', 'AbilityName', 'AbilityDesc', 'IntroGen']]
+  return pokedex
 
 def augment_move_data(moves):
   moves['Category'] = moves['Cat.'].apply(get_move_category)
@@ -420,11 +414,24 @@ def augment_move_data(moves):
   
   return moves
 
-#create move category table
-move_category = pd.DataFrame()
-move_category['MoveCategoryDesc'] = moves['Category'].unique()
-move_category = move_category.sort_values(by = 'MoveCategoryDesc')
-move_category['MoveCategoryId'] = range(len(move_category))
+def augment_ability_data(abilities):
+  abilities['AbilityRowId'] = abilities.index + 1
+  abilities.rename(columns =
+     {'Name': 'AbilityName',
+      'Description': 'AbilityDesc',
+      'Gen.': 'IntroGen'}, inplace = True)
+      
+  abilities = abilities[['AbilityRowId', 'AbilityName', 'AbilityDesc', 'IntroGen']]
+  
+  return abilities
+
+def create_move_category_table(moves):
+  move_category = pd.DataFrame()
+  move_category['MoveCategoryDesc'] = moves['Category'].unique()
+  move_category = move_category.sort_values(by = 'MoveCategoryDesc')
+  move_category['MoveCategoryId'] = range(len(move_category))
+  
+  return move_category
 
 #create the base stats table
 base_stats = pokedex[['PokedexRowId', 'HP', 'Atk', 'Def', 'SpAtk', 'SpDef', 'Speed', 'Total']]
