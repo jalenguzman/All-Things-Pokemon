@@ -514,3 +514,8 @@ for pokedex_nbr, dfs in individual_pages.items():
 
 individual_entries = pd.concat(individual_entries)
 
+#create breeding table
+breeding = individual_entries[['MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
+#get distinct egg groups
+#create training table
+
