@@ -274,7 +274,7 @@ def clean_pokedex_entry_data(df):
 
 def clean_training_data(df):
     df = transpose_df(df)
-    df['CatchRate'] = df['Catch rate'].str.split('(').str[0].replace('—', '0').astype(float)
+    df['CatchRatePerc'] = df['Catch rate'].str.split('(').str[0].replace('—', '0').astype(float)
     df['BaseFriendship'] = df['Base Friendship'].str.split('(').str[0].replace('—', '0').astype(float)
     df['BaseExp'] = df['Base Exp.'].replace('—', '0').astype(float)
 
@@ -282,7 +282,7 @@ def clean_training_data(df):
     {'EV yield': 'EVYield',
      'Growth Rate': 'GrowthRate'}, inplace=True)
 
-    df = df[['EVYield', 'CatchRate', 'BaseFriendship', 'BaseExp', 'GrowthRate']]
+    df = df[['EVYield', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate']]
     return df
 
 def clean_breeding_data(df):
