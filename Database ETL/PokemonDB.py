@@ -433,8 +433,10 @@ def create_move_category_table(moves):
   
   return move_category
 
-#create the base stats table
-base_stats = pokedex[['PokedexRowId', 'HP', 'Atk', 'Def', 'SpAtk', 'SpDef', 'Speed', 'Total']]
+def create_base_stats_table(pokedex):
+  base_stats = pokedex[['PokedexRowId', 'HP', 'Atk', 'Def', 'SpAtk', 'SpDef', 'Speed', 'Total']]
+  
+  return base_stats
 
 #create fact table for different Pokemon Types
 type_ids = {
