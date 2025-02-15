@@ -491,3 +491,25 @@ type_effectiveness = pd.DataFrame([ #convert results to df
     for idx, (atk, defn) in enumerate(itertools.product(type_ids.keys(), repeat=2))
 ])
 
+#dictionary of dictionaries storage
+individual_pages = {}
+
+#for every pokemon get their specific page info
+for idx, row in pokedex.iterrows():
+  pokedex_nbr = row['PokedexNbr']
+  url = f'https://pokemondb.net/pokedex/{pokedex_nbr}'
+  tables_data = scrape_individual_page_data(url)
+  clean_tables = clean_individual_page_data(tables_data)
+
+  individual_pages[pokedex_nbr] = {
+        f'df_{i+1}': df for i, df in enumerate(clean_tables)
+    }
+
+individual_entries = []
+
+for pokedex_nbr, dfs in individual_pages.items():
+  df = dfs.get('df_1')
+  individual_entries.append(df)
+
+individual_entries = pd.concat(individual_entries)
+
