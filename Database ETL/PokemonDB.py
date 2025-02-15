@@ -402,7 +402,11 @@ abilities.rename(columns =
       
 abilities = abilities[['AbilityRowId', 'AbilityName', 'AbilityDesc', 'IntroGen']]
 
-moves.rename(columns =
+def augment_move_data(moves):
+  moves['Category'] = moves['Cat.'].apply(get_move_category)
+  moves['MoveRowId'] = moves.index + 1
+  
+  moves.rename(columns =
     {'Name': 'MoveName',
      'Type': 'MoveType',
      'Power': 'MovePower',
@@ -411,8 +415,10 @@ moves.rename(columns =
      'Effect': 'MoveDesc',
      'Prob. (%)': 'EffectProbability'}, inplace = True)
 
-moves = moves[['MoveRowid', 'MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
+  moves = moves[['MoveRowId', 'MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
                'MovePowerPoints', 'MoveDesc', 'EffectProbability']]
+  
+  return moves
 
 #create move category table
 move_category = pd.DataFrame()
