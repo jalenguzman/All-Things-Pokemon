@@ -4,6 +4,7 @@ import requests #requests.get()
 from bs4 import BeautifulSoup #soup.find() #BeautifulSoup()
 import re #re.findall() #re.search()
 import itertools #itertools.product()
+from functools import reduce #reduce()
 
 #DEF SCRAPE FUNCTIONS
 def get_request_response(url):
