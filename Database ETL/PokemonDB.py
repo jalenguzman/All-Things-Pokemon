@@ -239,10 +239,16 @@ def scrape_forms_data(soup):
                     table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
                     df = pd.DataFrame(table_data)
                     form_tables[header_text] = df
+        
+        # Extract artwork URL
+        
+        img_tag = form_div.find('img', {'alt': re.compile(r'.artwork')})
+        img_url = img_tag['src'] if img_tag else None
+        form_tables['Artwork'] = img_url
 
         # Store the form's data
         form_data[form_name] = form_tables
-
+        
     return form_data
 
 def scrape_evolution_data(soup):
@@ -323,11 +329,6 @@ def scrape_individual_page_data(url):
     response = get_request_response(url)
     soup = BeautifulSoup(response.content, 'html.parser')
     tables_dict = {}
-
-    # Extract artwork URL
-    img_tag = soup.find('img', {'alt': re.compile(r'.artwork')})
-    img_url = img_tag['src'] if img_tag else None
-    tables_dict['Artwork'] = img_url
 
     # Scrape forms data
     tables_dict['Forms'] = scrape_forms_data(soup)
