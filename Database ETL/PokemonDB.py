@@ -350,6 +350,19 @@ def transpose_df(df):
     df = df[1:] #remove row 1
     return df
 
+def clean_artwork_data(dict):
+  column_names = ['Name', 'ArtworkURL']
+  main_dict = {}
+  
+  for key in dict['Forms']:
+    if bool(dict['Forms'][key]) == False:
+      continue
+    
+    main_dict[key] = dict['Forms'][key]['Artwork']
+  
+  df = pd.DataFrame(main_dict.items(), columns = column_names)
+  return df
+
 def clean_pokedex_entry_data(dict):
   #predefine columns wanted in the ending df
   column_names = ['Name', 'PokedexNbr', 'Type', 'Species', 'Height', 'Weight', 'Ability1', 'Ability2', 'HiddenAbility']
