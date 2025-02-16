@@ -394,7 +394,7 @@ def clean_pokedex_entry_data(dict):
 
 def clean_training_data(dict):
   #predefine columns wanted in the ending df
-  column_names = ['Name', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate']
+  column_names = ['Name', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate', 'EVYield']
   main_df = pd.DataFrame(columns = column_names) #create empty df to append to
   
   for key in dict['Forms']:
