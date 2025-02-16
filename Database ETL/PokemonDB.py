@@ -439,19 +439,20 @@ def clean_evolution_data(dict):
   return df
 
 def clean_move_data(dict):
-    res = {key: val for key, val in dict.items() if key.startswith('Move_Table_')}
-    data = []
-
-    for key in res:
-      temp = res[key]
-      temp = temp[1:]
-      if 'Move' in temp.columns:
-        data.append(temp['Move'])
-
-    df = pd.concat(data)
-    df = df.unique()
-    df = pd.DataFrame(df, columns = ['Move'])
-    return df
+  column_names = ['MoveName']
+  main_df = pd.DataFrame(data = ['Move'], columns = column_names)
+  
+  for key in dict['Moves']:
+    for item in range(len(dict['Moves'][key])):
+      df = pd.DataFrame(dict['Moves'][key][item])
+      df.rename(columns = {'Move': 'MoveName'}, inplace = True)
+      df = df[column_names]
+      
+      main_df = pd.concat([main_df, df])
+  
+  main_df = main_df.drop_duplicates() #only return distinct move names
+  
+  return main_df
 
 def clean_individual_page_data(tables_data):
     artwork_url = pd.DataFrame([tables_data['Artwork']], columns = ['ArtURL'])
