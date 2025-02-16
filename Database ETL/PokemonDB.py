@@ -373,26 +373,40 @@ def clean_training_data(dict):
     {'EV yield': 'EVYield',
      'Growth Rate': 'GrowthRate'}, inplace=True)
 
-    df = df[['EVYield', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate']]
-    return df
+    df = df[column_names]
+    main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)])
+    
+  return main_df
 
-def clean_breeding_data(df):
-    df = transpose_df(df)
-
-    if df['Gender'].str.contains('Genderless|—').any():
-      df['MalePerc'] = 0
-      df['FemalePerc'] = 0
-    else:
-      df[['MalePerc', 'FemalePerc']] = df['Gender'].str.split(',', expand=True)
-      df['MalePerc'] = df['MalePerc'].str.split('%').str[0].astype(float)
-      df['FemalePerc'] = df['FemalePerc'].str.split('%').str[0].astype(float)
-
-    df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
-    df[['EggGroup1', 'EggGroup2']] = df['Egg Groups'].str.split(',', expand = True).reindex([0, 1], axis=1)
-    df['EggGroup2'] = df['EggGroup2'].str.strip() #trim whitespace
-
-    df = df[['MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
-    return df
+def clean_breeding_data(dict):
+    column_names = ['Name', 'MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']
+    main_df = pd.DataFrame(columns = column_names)
+    
+    for key in dict['Forms']:
+      
+      if bool(dict['Forms'][key]) == False:
+        continue
+      
+      df = dict['Forms'][key]['Breeding']
+      df = transpose_df(df)
+    
+      df['Name'] = key
+      if df['Gender'].str.contains('Genderless|—').any():
+        df['MalePerc'] = 0
+        df['FemalePerc'] = 0
+      else:
+        df[['MalePerc', 'FemalePerc']] = df['Gender'].str.split(',', expand=True)
+        df['MalePerc'] = df['MalePerc'].str.split('%').str[0].astype(float)
+        df['FemalePerc'] = df['FemalePerc'].str.split('%').str[0].astype(float)
+  
+      df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
+      df[['EggGroup1', 'EggGroup2']] = df['Egg Groups'].str.split(',', expand = True).reindex([0, 1], axis=1)
+      df['EggGroup2'] = df['EggGroup2'].str.strip() #trim whitespace
+  
+      df = df[column_names]
+      main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)])
+      
+    return main_df
 
 def clean_pokdex_flavor_text_data(dict):
     if 'Pokédex entries' in dict: #check if entry exists, may not for scarlet/violet dlc exclusives
