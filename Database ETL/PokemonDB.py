@@ -375,6 +375,9 @@ def clean_pokedex_entry_data(dict):
     if bool(dict['Forms'][key]) == False: 
       continue #skip to next for loop iteration
     
+    if 'ability' in key:
+      continue #skip to next loop if tab is for an ability iteration
+    
     df = dict['Forms'][key]['Pokédex data']
     df = transpose_df(df)
     
@@ -398,6 +401,10 @@ def clean_training_data(dict):
     
     if bool(dict['Forms'][key]) ==False:
       continue
+    
+    if 'ability' in key:
+      continue #skip to next loop if tab is for an ability iteration
+
     
     df = dict['Forms'][key]['Training']
     df = transpose_df(df)
@@ -424,6 +431,10 @@ def clean_breeding_data(dict):
       
       if bool(dict['Forms'][key]) == False:
         continue
+      
+      if 'ability' in key:
+        continue #skip to next loop if tab is for an ability iteration
+
       
       df = dict['Forms'][key]['Breeding']
       df = transpose_df(df)
