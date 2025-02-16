@@ -460,16 +460,14 @@ def clean_breeding_data(dict):
       
     return main_df
 
-def clean_pokdex_flavor_text_data(dict):
-    if 'Pokédex entries' in dict: #check if entry exists, may not for scarlet/violet dlc exclusives
-      df = dict['Pokédex entries']
-
-      rows = len(df.index) - 1 #get max row in df (latest flavortext)
-      data = {'FlavorText': [df[1][rows]]} #select out max row as flavortext
-
-      return(pd.DataFrame(data))
-    else:
-      return None
+def clean_pokedex_flavor_text_data(dict):
+  df = pd.DataFrame(dict['Flavor Text']['Flavor Text'])
+  
+  df.columns = ['Game', 'FlavorText']
+  df = df.tail(1) #select last row
+  df = df[['FlavorText']] #only select one column
+  
+  return df
 
 def clean_evolution_data(dict):
   res = {key: val for key, val in dict.items() if key.startswith('Evolution_Table_')}
