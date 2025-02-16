@@ -450,8 +450,11 @@ def clean_breeding_data(dict):
   
       df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
       df[['EggGroup1', 'EggGroup2']] = df['Egg Groups'].str.split(',', expand = True).reindex([0, 1], axis=1)
-      df['EggGroup2'] = df['EggGroup2'].str.strip() #trim whitespace
-  
+      
+      
+      if df['EggGroup2'].isna().any() == False:
+        df['EggGroup2'].str.split() #trim whitespace
+
       df = df[column_names]
       main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)])
       
