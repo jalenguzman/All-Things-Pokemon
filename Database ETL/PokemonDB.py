@@ -457,8 +457,8 @@ def clean_move_data(dict):
 def clean_individual_page_data(tables_data):
     artwork_url = pd.DataFrame([tables_data['Artwork']], columns = ['ArtURL'])
     entry_data = clean_pokedex_entry_data(tables_data) #pokedex
-    training_data = clean_training_data(tables_data['Training']) #training
-    breeding_data = clean_breeding_data(tables_data['Breeding']) #breeding
+    training_data = clean_training_data(tables_data) #training
+    breeding_data = clean_breeding_data(tables_data) #breeding
     flavor_text_data = clean_pokdex_flavor_text_data(tables_data) #flavor text
     evolution_data = clean_evolution_data(tables_data) #evolution
     move_data = clean_move_data(tables_data) #moves
