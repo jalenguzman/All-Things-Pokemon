@@ -185,6 +185,26 @@ def split_abilities(abilities):
     # Ensure the list has exactly 3 elements
     return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
 
+def scrape_flavor_text(soup):
+  header = soup.find('h2', string = 'Pokédex entries')
+  table = header.find_next('table')
+  
+  flavor_text = {}
+  if table:
+    rows = table.find_all('tr')
+    table_data = []
+    for row in rows:
+        cells = row.find_all(['td', 'th'])
+        cell_data = [cell.text.strip() for cell in cells]
+        table_data.append(cell_data)
+    # Ensure all rows have the same number of columns
+    max_columns = max(len(row) for row in table_data)
+    table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
+    df = pd.DataFrame(table_data)
+    flavor_text['Flavor Text'] = df
+  
+  return flavor_text
+
 def scrape_forms_data(soup):
     form_tab_container = soup.find('div', {'class': 'tabset-basics'})
     form_tabs = form_tab_container.select('a.sv-tabs-tab') if form_tab_container else []
@@ -200,7 +220,7 @@ def scrape_forms_data(soup):
 
         # Scrape data for this form
         form_tables = {}
-        headers_of_interest = ["Pokédex data", "Training", "Breeding", "Pokédex entries"]
+        headers_of_interest = ["Pokédex data", "Training", "Breeding"]
         headers = form_div.find_all(['h2', 'h3'])
 
         for header in headers:
