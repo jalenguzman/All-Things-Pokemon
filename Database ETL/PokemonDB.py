@@ -505,19 +505,24 @@ def clean_move_data(dict):
   return main_df
 
 def clean_individual_page_data(tables_data):
-    artwork_url = pd.DataFrame([tables_data['Artwork']], columns = ['ArtURL'])
+    artwork_url = clean_artwork_data(tables_data) #artwork
     entry_data = clean_pokedex_entry_data(tables_data) #pokedex
     training_data = clean_training_data(tables_data) #training
     breeding_data = clean_breeding_data(tables_data) #breeding
-    flavor_text_data = clean_pokdex_flavor_text_data(tables_data) #flavor text
-    evolution_data = clean_evolution_data(tables_data) #evolution
+    flavor_text_data = clean_pokedex_flavor_text_data(tables_data) #flavor text
+    
+    #evolution_data = clean_evolution_data(tables_data) #evolution
     move_data = clean_move_data(tables_data) #moves
 
     #combine as needed for sql table storage
-    df = pd.concat([entry_data, training_data, breeding_data], axis = 1)
-    df = pd.concat([df.reset_index(drop=True), artwork_url, flavor_text_data], axis = 1)
+    dfs = [entry_data, training_data, breeding_data, artwork_url]
+    merged = reduce(lambda left, right: pd.merge(left, right, on = 'Name', how = 'left'), dfs)
+    
+    flavor_text_data = pd.concat([flavor_text_data] * len(merged), ignore_index=True) #add enough rows in order to add onto merged
+    merged = pd.concat([merged.reset_index(drop=True), flavor_text_data.reset_index(drop=True)], axis=1) #add flavor text to merged
 
-    return df, evolution_data, move_data
+
+    return merged, move_data
 
 def augment_pokedex_data(pokedex):
   pokedex[['Type1', 'Type2']] = pokedex['Type'].str.split(' ', expand=True, n=1) #split into two columns
@@ -695,7 +700,6 @@ def create_training_table(individual_entries):
   
   return training
 
-
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
@@ -736,8 +740,6 @@ individual_entries = pd.concat(individual_entries)
 breeding = create_breeding_table(individual_entries)
 egg_groups = create_egg_group_table(breeding)
 training = create_training_table(individual_entries)
-
-
 
 
 
