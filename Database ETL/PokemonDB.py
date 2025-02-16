@@ -333,6 +333,9 @@ def scrape_individual_page_data(url):
     # Scrape forms data
     tables_dict['Forms'] = scrape_forms_data(soup)
 
+    # Scrape flavor text from pokemon entries
+    tables_dict['Flavor Text'] = scrape_flavor_text(soup)
+
     # Scrape evolution data
     tables_dict['Evolution_Chains'] = scrape_evolution_data(soup)
 
