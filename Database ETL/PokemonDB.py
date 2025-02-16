@@ -351,8 +351,20 @@ def clean_pokedex_entry_data(dict):
   
   return main_df
 
-def clean_training_data(df):
+def clean_training_data(dict):
+  #predefine columns wanted in the ending df
+  column_names = ['Name', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate']
+  main_df = pd.DataFrame(columns = column_names) #create empty df to append to
+  
+  for key in dict['Forms']:
+    
+    if bool(dict['Forms'][key]) ==False:
+      continue
+    
+    df = dict['Forms'][key]['Training']
     df = transpose_df(df)
+    
+    df['Name'] = key
     df['CatchRatePerc'] = df['Catch rate'].str.split('(').str[0].replace('—', '0').astype(float)
     df['BaseFriendship'] = df['Base Friendship'].str.split('(').str[0].replace('—', '0').astype(float)
     df['BaseExp'] = df['Base Exp.'].replace('—', '0').astype(float)
