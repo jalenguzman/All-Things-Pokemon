@@ -372,7 +372,7 @@ def clean_artwork_data(dict):
 
 def clean_pokedex_entry_data(dict):
   #predefine columns wanted in the ending df
-  column_names = ['Name', 'PokedexNbr', 'Type', 'Species', 'Height', 'Weight', 'Ability1', 'Ability2', 'HiddenAbility']
+  column_names = ['Name', 'PokedexNbr', 'Type', 'Species', 'Height', 'Weight', 'Ability1', 'Ability2', 'Ability3']
   main_df = pd.DataFrame(columns = column_names) #create empty df to append to
   
   #for every form at a single pokedex number
@@ -391,7 +391,7 @@ def clean_pokedex_entry_data(dict):
     df['Name'] = key
     df['Height'] = df['Height'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
     df['Weight'] = df['Weight'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
-    df[['Ability1', 'Ability2', 'HiddenAbility']] = df['Abilities'].apply(split_abilities)
+    df[['Ability1', 'Ability2', 'Ability3']] = df['Abilities'].apply(split_abilities)
     df['PokedexNbr'] = df['National №']
     
     df = df[column_names]
