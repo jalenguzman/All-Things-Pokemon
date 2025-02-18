@@ -168,22 +168,10 @@ def get_move_category(cat):
 
 # Function to split abilities into three columns
 def split_abilities(abilities):
-    # Pattern to match abilities
-    pattern = r"(\d\.\s*([^0-9]+?))(?=(?:\d\.\s*[^0-9])|$)"
-    matches = re.findall(pattern, abilities)
-    abilities_split = [match[1].strip() for match in matches]
-
-    # Split the second ability if it contains concatenated abilities
-    if len(abilities_split) > 1:
-        ability2 = abilities_split[1]
-        match = re.search(r'([a-z])([A-Z])', ability2)
-        if match:
-            split_idx = match.start(1) + 1
-            abilities_split[1] = ability2[:split_idx].strip()
-            abilities_split.append(ability2[split_idx:].strip())
-
-    # Ensure the list has exactly 3 elements
-    return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
+  abilities_split = abilities.split('|') #split ability string by delimiter
+  abilities_split = [ability.strip() for ability in abilities_split] #trim whitespace
+    
+  return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
 
 def scrape_flavor_text(soup):
   header = soup.find('h2', string = 'Pokédex entries')
