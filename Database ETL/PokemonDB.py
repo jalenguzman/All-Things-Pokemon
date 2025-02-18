@@ -239,6 +239,19 @@ def scrape_forms_data(soup):
                     for row in rows:
                         cells = row.find_all(['td', 'th'])
                         cell_data = [cell.text.strip() for cell in cells]
+                        
+                        #Handle abilities piece specifically so we can separate them out later
+                        if header_text == "Pokédex data" and "Abilities" in cell_data:
+                            #Extract abilities and join them with a delimiter
+                            abilities = []
+                            ability_cells = row.find_all('td')
+                            for ability_cell in ability_cells:
+                                ability_links = ability_cell.find_all('a')
+                                for link in ability_links:
+                                    abilities.append(link.text.strip())
+                            #add delimiter
+                            cell_data = ["Abilities", "|".join(abilities)]
+                        
                         table_data.append(cell_data)
                     # Ensure all rows have the same number of columns
                     max_columns = max(len(row) for row in table_data)
