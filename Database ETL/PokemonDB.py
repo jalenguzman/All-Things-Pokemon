@@ -187,10 +187,10 @@ def split_abilities(abilities):
 
 def scrape_flavor_text(soup):
   header = soup.find('h2', string = 'Pokédex entries')
-  table = header.find_next('table')
   
   flavor_text = {}
-  if table:
+  if header:
+    table = header.find_next('table')
     rows = table.find_all('tr')
     table_data = []
     for row in rows:
@@ -201,6 +201,12 @@ def scrape_flavor_text(soup):
     max_columns = max(len(row) for row in table_data)
     table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
     df = pd.DataFrame(table_data)
+    flavor_text['Flavor Text'] = df
+  
+  else:
+    data = {'Game': ['None'],
+            'Flavor Text': ['Pokemon has no pokedex entry']}
+    df = pd.DataFrame(data)
     flavor_text['Flavor Text'] = df
   
   return flavor_text
