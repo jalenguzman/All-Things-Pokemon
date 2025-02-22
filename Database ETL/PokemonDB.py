@@ -854,6 +854,18 @@ def create_training_table(df):
                   
   return training
 
+def create_pokedex_table(df):
+  """
+  Creates Table for dbo.Pokedex
+  @param dataframe that contains all Pokemon's basic pokedex information
+  @returns: table that will be central to sql database
+  """
+  
+  pokedex = df[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'Type1', 'Type2', 'Height', 'Weight', 'FlavorText', 'Gen', 
+                'IsMega', 'IsRegionVariant', 'IsAdditionalVariant', 'IsSubLegendary', 'IsMythical', 'IsLegendary', 'ArtworkURL']]
+                
+  return pokedex
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
