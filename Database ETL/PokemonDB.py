@@ -8,7 +8,7 @@ from functools import reduce #reduce()
 
 #DEF SCRAPE FUNCTIONS
 def get_request_response(url):
-  response = requests.get(url)
+  response = requests.get(url, timeout = 10)
   if response.status_code != 200: #only status code that we accept
     raise Exception(f"Failed to load page {url}")
   return response
