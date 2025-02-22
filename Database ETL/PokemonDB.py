@@ -129,6 +129,72 @@ def scrape_ability_data(url):
   df = pd.DataFrame(ability_data)
   return df
 
+def scrape_evolution_data(url):
+  """
+  Scrapes evolution data from the given URL.
+  @param url: 'https://pokemondb.net/evolution/'
+  @returns: A dictionary where keys are evolution page URLs and elements are dfs of different evo chains
+  """
+  
+  response = get_request_response(url)
+  soup = BeautifulSoup(response.content, 'html.parser')
+
+  nav = soup.find('nav', class_='panel panel-nav')  #Find navigator panel full of subpages
+  links = nav.find_all('a', href=True)  #get all links in navigator panel
+  
+  #empty dictionary to store eventual return data
+  evolution_dict = {}  
+  
+  #pretending I'm not looking at a triple for loop
+  for link in links:
+      ending = link.get('href')
+      if ending == '/evolution/none': #if url is for evolution page for pokemon without evos
+          continue  #Skip
+  
+      full_url = f'https://pokemondb.net{ending}'  #Combine URL
+  
+      #scrape
+      response = get_request_response(full_url)  
+      soup = BeautifulSoup(response.content, 'html.parser')
+      table = soup.find('table', {'id': 'evolution'})  
+  
+      if not table:
+          continue  # Skip if no table is found
+  
+      evolution_data = []
+      
+      #columns and rows data
+      headers = [header.text.strip() for header in table.find('thead').find_all('th')]
+      rows = table.find('tbody').find_all('tr')
+      
+      #iterate through rows and set them into columns (depending on header)
+      for row in rows:
+          cells = row.find_all('td')
+          chains = {}
+
+          for i in range(len(headers)):
+              if headers[i] == 'Evolving from': #specific actions for data in 'Evolving from' column
+                  name_cell = cells[i]
+                  name = name_cell.find('a').text.strip()
+                  subname = name_cell.find('small').text.strip() if name_cell.find('small') else None
+                  chains['Evolving From Name'] = name
+                  chains['Evolving From Subname'] = subname
+              elif headers[i] == 'Evolving to':  
+                  name_cell = cells[i]
+                  name = name_cell.find('a').text.strip()
+                  subname = name_cell.find('small').text.strip() if name_cell.find('small') else None
+                  chains['Evolving To Name'] = name
+                  chains['Evolving To Subname'] = subname
+              else:
+                  chains[headers[i]] = cells[i].text.strip()
+          
+          evolution_data.append(chains)  #Append row data
+
+      df = pd.DataFrame(evolution_data)  #convert collected info into df
+      evolution_dict[ending] = df  #Set into dict
+  
+  return evolution_dict
+
 def scrape_individual_page_data(url):
   """
   Central Control for Scraping information from an individual pokemon's pokedex page
@@ -140,17 +206,9 @@ def scrape_individual_page_data(url):
   soup = BeautifulSoup(response.content, 'html.parser')
   tables_dict = {}
 
-  # Scrape forms data
-  tables_dict['Forms'] = scrape_forms_data(soup)
-
-  # Scrape flavor text from pokemon entries
-  tables_dict['Flavor Text'] = scrape_flavor_text(soup)
-
-  # Scrape evolution data
-  tables_dict['Evolution Chains'] = scrape_evolution_data(soup)
-
-  # Scrape moves data
-  tables_dict['Moves'] = scrape_moves_data(soup)
+  tables_dict['Forms'] = scrape_forms_data(soup) #Scrape forms data
+  tables_dict['Flavor Text'] = scrape_flavor_text(soup) #Scrape flavor text from pokemon entries
+  tables_dict['Moves'] = scrape_moves_data(soup) #Scrape moves data
 
   return tables_dict
 
