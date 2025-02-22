@@ -835,6 +835,23 @@ def create_training_table(df):
     'Speed': 'SpdYield'
   }
   
+  for col in stat_mapping.values():
+    df[col] = 0 #set all the values to 0s initially
+  
+  #defining a function in a function for fun
+  def extract_stat_values(row):
+    matches = re.findall(r'(\d+) (HP|Attack|Defense|Sp\. Atk|Sp\. Def|Speed)', row)
+    return {stat_mapping[stat]: int(value) for value, stat in matches}
+
+  for index, row in df.iterrows(): #for every row
+    stat_values = extract_stat_values(row['EVYield']) #extract data from stat with applied function
+    for col, value in stat_values.items():
+        df.at[index, col] = value
+  
+  #select wanted columns
+  training = df[['PokedexRowId', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate', 
+                  'HPYield', 'AtkYield', 'DefYield', 'SpAtkYield', 'SpDefYield', 'SpdYield']]
+                  
   return training
 
 #call comprehensive scrape functions
