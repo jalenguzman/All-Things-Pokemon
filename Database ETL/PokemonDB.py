@@ -6,14 +6,39 @@ import re #re.findall() #re.search()
 import itertools #itertools.product()
 from functools import reduce #reduce()
 
-#DEF SCRAPE FUNCTIONS
 def get_request_response(url):
-  response = requests.get(url, timeout = 10)
+  """
+  Gets information on the requested URL.
+  @param url: the url (str) of the webpage we want information for
+  @returns: Response.response.object from url.
+  """
+
+  response = requests.get(url, timeout = 10) #gives 10s to give response
   if response.status_code != 200: #only status code that we accept
     raise Exception(f"Failed to load page {url}")
   return response
 
+def transpose_df(df):
+  """
+  Transposes a dataframe object and does some preprocessing.
+  @param df: a dataframe that needs to be transposed and column names to be set for it
+  @returns: transposed version of dataframe given.
+  """
+
+  df = df.transpose()
+  df.columns = df.iloc[0] #set column names to values in row 1
+  df = df[1:] #remove row 1
+  return df
+
+##### Scraping Data From WebPages Functions #####
+
 def scrape_pokedex_data(url):
+  """
+  Used to get basic information from the table on PokemonDB.net/pokedex.
+  @param url: 'https://pokemondb.net/pokedex'
+  @returns: A dataframe of all pokemon, their variant forms, and basic information about them
+  """
+
   response = get_request_response(url)
   
   soup = BeautifulSoup(response.content, 'html.parser') #parse using BeautifulSoup
@@ -43,6 +68,12 @@ def scrape_pokedex_data(url):
   return df
 
 def scrape_move_data(url):
+  """
+  Used to get basic information from the table on PokemonDB.net/move/all
+  @param url: 'https://pokemondb.net/move/all'
+  @returns: A dataframe of all pokemon moves and basic information about them
+  """
+
   response = get_request_response(url)
 
   soup = BeautifulSoup(response.content, 'html.parser') #parse using BeautifulSoup
@@ -71,6 +102,12 @@ def scrape_move_data(url):
   return df
 
 def scrape_ability_data(url):
+  """
+  Used to get basic information from the table on PokemonDB.net/ability
+  @param url: 'https://pokemondb.net/ability'
+  @returns: A dataframe of all pokemon abilities and basic information about them
+  """
+
   response = get_request_response(url)
 
   soup = BeautifulSoup(response.content, 'html.parser') #parse using BeautifulSoup
@@ -93,6 +130,404 @@ def scrape_ability_data(url):
   return df
 
 def get_special_pokemon(choice):
+  match choice:
+        case 'Sublegendary':
+            poke_list = ['Articuno', 'Zapdos', 'Moltres',
+                     'Raikou', 'Entei', 'Suicine',
+                     'Regirock', 'Regice', 'Registeel', 'Regieleki', 'Regidrago',
+                     'Latias', 'Latios',
+                     'Uxie', 'Mesprit', 'Azelf'
+                     'Heatran', 'Regigigas', 'Cresselia',
+                     'Colbalion', 'Terrakion', 'Virizion', 'Silvally',
+                     'Tornadus', 'Thundurus', 'Landorus', 'Enamorus',
+                     'Tapu Koko', 'Tapu Lele', 'Tapu Bulu', 'Tapu Fini',
+                     'Kubfu', 'Urshifu', 'Glastrier', 'Spectrier',
+                     'Wo-Chien', 'Chien-Pao', 'Ting-Lu', 'Chi-Yu',
+                     'Okidogi', 'Munkidori', 'Fezandipiti', 'Ogerpon']
+
+def scrape_individual_page_data(url):
+  """
+  Central Control for Scraping information from an individual pokemon's pokedex page
+  @param url: f'https://pokemondb.net/pokedex/{number or name}'
+  @returns: Dictionary with 4 items: Forms, Flavor Text, Evolution Chains, and Moves
+  """
+
+  response = get_request_response(url)
+  soup = BeautifulSoup(response.content, 'html.parser')
+  tables_dict = {}
+
+  # Scrape forms data
+  tables_dict['Forms'] = scrape_forms_data(soup)
+
+  # Scrape flavor text from pokemon entries
+  tables_dict['Flavor Text'] = scrape_flavor_text(soup)
+
+  # Scrape evolution data
+  tables_dict['Evolution Chains'] = scrape_evolution_data(soup)
+
+  # Scrape moves data
+  tables_dict['Moves'] = scrape_moves_data(soup)
+
+  return tables_dict
+
+def scrape_forms_data(soup):
+  """
+  Scrapes data from Pokemon's individual page (Pokedex, Training, and Breeding Tables) for all its possible variants
+  @param soup: The HTML parsed BeautifulSoup content from the pokemon's individual page url
+  @returns: dictionary where each key represents a pokemon's variant and contains pokedex, training, and breeding data
+  """  
+
+  form_tab_container = soup.find('div', {'class': 'tabset-basics'})
+  form_tabs = form_tab_container.select('a.sv-tabs-tab') if form_tab_container else []
+  form_data = {}
+
+  for tab in form_tabs:
+      form_name = tab.text.strip()
+      form_id = tab['href'].replace('#', '')  # e.g., 'tab-basic-475'
+      form_div = soup.find('div', {'id': form_id})
+
+      if not form_div:
+          continue  # Skip if the form's div is not found
+
+      # Scrape data for this form
+      form_tables = {}
+      headers_of_interest = ["Pokédex data", "Training", "Breeding"]
+      headers = form_div.find_all(['h2', 'h3'])
+
+      for header in headers:
+          header_text = header.text.strip()
+          if header_text in headers_of_interest:
+              table = header.find_next('table')
+              if table:
+                  rows = table.find_all('tr')
+                  table_data = []
+                  for row in rows:
+                      cells = row.find_all(['td', 'th'])
+                      cell_data = [cell.text.strip() for cell in cells]
+                      
+                      #Handle abilities piece specifically so we can separate them out later
+                      if header_text == "Pokédex data" and "Abilities" in cell_data:
+                          #Extract abilities and join them with a delimiter
+                          abilities = []
+                          ability_cells = row.find_all('td')
+                          for ability_cell in ability_cells:
+                              ability_links = ability_cell.find_all('a')
+                              for link in ability_links:
+                                  abilities.append(link.text.strip())
+                          #add delimiter
+                          cell_data = ["Abilities", "|".join(abilities)]
+                      
+                      table_data.append(cell_data)
+                  # Ensure all rows have the same number of columns
+                  max_columns = max(len(row) for row in table_data)
+                  table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
+                  df = pd.DataFrame(table_data)
+                  form_tables[header_text] = df
+      
+      # Extract artwork URL
+      
+      img_tag = form_div.find('img', {'alt': re.compile(r'.artwork')})
+      img_url = img_tag['src'] if img_tag else None
+      form_tables['Artwork'] = img_url
+
+      # Store the form's data
+      form_data[form_name] = form_tables
+      
+  return form_data
+
+def scrape_flavor_text(soup):
+  """
+  Scrapes data from Pokemon's Pokedex Entries (akaed here as Flavor Text)
+  @param soup: The HTML parsed BeautifulSoup content from the pokemon's individual page url
+  @returns: dictionary where each key represents a pokemon's variant and contains the flavored text
+  """
+
+  header = soup.find('h2', string = 'Pokédex entries')
+  
+  flavor_text = {}
+  if header:
+    table = header.find_next('table')
+    rows = table.find_all('tr')
+    table_data = []
+    for row in rows:
+        cells = row.find_all(['td', 'th'])
+        cell_data = [cell.text.strip() for cell in cells]
+        table_data.append(cell_data)
+    # Ensure all rows have the same number of columns
+    max_columns = max(len(row) for row in table_data)
+    table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
+    df = pd.DataFrame(table_data)
+    flavor_text['Flavor Text'] = df
+  
+  else:
+    data = {'Game': ['None'],
+            'Flavor Text': ['Pokemon has no pokedex entry']}
+    df = pd.DataFrame(data)
+    flavor_text['Flavor Text'] = df
+  
+  return flavor_text
+
+def scrape_moves_data(soup):
+  """
+  Scrapes data about Pokemon's available moves
+  @param soup: The HTML parsed BeautifulSoup content from the pokemon's individual page url
+  @returns: dictionary where each key represents a specific game and what moves the pokemon can learn in that game
+  """
+
+  move_tab_container = soup.find('div', {'class': 'tabset-moves-game sv-tabs-wrapper'})
+  move_tabs = move_tab_container.select('a.sv-tabs-tab') if move_tab_container else []
+  move_data = {}
+
+  for tab in move_tabs:
+      tab_name = tab.text.strip()
+      tab_id = tab['href'].replace('#', '')  # e.g., 'tab-moves-21'
+      tab_div = soup.find('div', {'id': tab_id})
+
+      if not tab_div:
+          continue  # Skip if the tab's div is not found
+
+      # Scrape move tables for this tab
+      move_tables = []
+      tables = tab_div.find_all('table', {'class': 'data-table'})
+
+      for table in tables:
+          headers = [header.text.strip() for header in table.find_all('th')]
+          rows = table.find_all('tr')
+          table_data = []
+          for row in rows:
+              cells = row.find_all(['td', 'th'])
+              cell_data = []
+              for cell in cells:
+                  img = cell.find('img')
+                  if img:
+                      cell_data.append(img['src'])
+                  else:
+                      cell_data.append(cell.text.strip())
+              table_data.append(cell_data)
+          df = pd.DataFrame(table_data, columns=headers if headers else None)
+          move_tables.append(df)
+
+      # Store the move data for this tab
+      move_data[tab_name] = move_tables
+
+  return move_data
+
+#### Cleaning Scraped Dictionaries and Converting to easier to handle DataFrame Functions #####
+
+def clean_individual_page_data(tables_data):
+  """
+  Control Center for calling functions that can clean the data coming from a pokemon's individual pokedex page
+  @param tables_data: the result of scrape_individual_page_data / the - hopefully - successfully HTML data scraped into dictionaries and dfs
+  @returns: dictionary where the first key is a mega table with most scraped data and the second key is the Pokemon's move data. Both keys are dfs
+  """
+
+  artwork_url = clean_artwork_data(tables_data) #artwork
+  entry_data = clean_pokedex_entry_data(tables_data) #pokedex
+  training_data = clean_training_data(tables_data) #training
+  breeding_data = clean_breeding_data(tables_data) #breeding
+  flavor_text_data = clean_pokedex_flavor_text_data(tables_data) #flavor text
+    
+  #evolution_data = clean_evolution_data(tables_data) #evolution
+  move_data = clean_move_data(tables_data) #moves
+
+  #combine as needed for sql table storage
+  dfs = [entry_data, training_data, breeding_data, artwork_url]
+  merged = reduce(lambda left, right: pd.merge(left, right, on = 'Name', how = 'left'), dfs)
+    
+  flavor_text_data = pd.concat([flavor_text_data] * len(merged), ignore_index=True) #add enough rows in order to add onto merged
+  merged = pd.concat([merged.reset_index(drop=True), flavor_text_data.reset_index(drop=True)], axis=1) #add flavor text to merged
+
+  return merged, move_data
+
+def clean_artwork_data(dict):
+  """
+  Converts Dictionary with Artwork data into Dataframe
+  @param dict: the result of scrape_individual_page_data / the - hopefully - successfully HTML data scraped into dictionaries and dfs
+  @returns: dataframe with ArtworkURL as the main column (# of rows equal to number of variants specific Pokemon has)
+  """
+
+  column_names = ['Name', 'ArtworkURL'] #set names of columns for returning df
+  main_dict = {} #create empty df to hold items in intermediate phase
+  
+  for key in dict['Forms']: #for each pokemon variant
+    if bool(dict['Forms'][key]) == False:
+      continue
+    
+    main_dict[key] = dict['Forms'][key]['Artwork'] #extract needed info
+  
+  df = pd.DataFrame(main_dict.items(), columns = column_names) #rowbind all elements extracted
+  return df
+
+def clean_pokedex_entry_data(dict):
+  """
+  Converts Dictionary with Pokedex Entry data into Dataframe
+  @param dict: the result of scrape_individual_page_data / the - hopefully - successfully HTML data scraped into dictionaries and dfs
+  @returns: dataframe with basic pokemon data (# of rows equal to number of variants specific Pokemon has)
+  """
+
+  #predefine columns wanted in the ending df
+  column_names = ['Name', 'PokedexNbr', 'Type', 'Species', 'Height', 'Weight', 'Ability1', 'Ability2', 'Ability3']
+  main_df = pd.DataFrame(columns = column_names) #create empty df to append to
+  
+  #for every form at a single pokedex number
+  for key in dict['Forms']:
+    
+    # if there is no form information in the key
+    if bool(dict['Forms'][key]) == False: 
+      continue #skip to next for loop iteration
+    
+    if 'ability' in key:
+      continue #skip to next loop if tab is for an ability iteration
+    
+    df = dict['Forms'][key]['Pokédex data']
+    df = transpose_df(df)
+    
+    df['Name'] = key
+    df['Height'] = df['Height'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float) #splits off all char info, replace -s with 0s and convert to float
+    df['Weight'] = df['Weight'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
+    df[['Ability1', 'Ability2', 'Ability3']] = df['Abilities'].apply(split_abilities)
+    df['PokedexNbr'] = df['National №']
+    
+    df = df[column_names]
+    main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)]) #astype used to prevent future warning error
+  
+  return main_df
+
+def split_abilities(abilities):
+  """
+  Splits string of abilities by | delimiter into 3 max three column series
+  @param abilities: string of abilities with | delimiter for parsing
+  @returns: Series where each element represents a distinct Pokemon ability
+  """
+
+  abilities_split = abilities.split('|') #split ability string by delimiter
+  abilities_split = [ability.strip() for ability in abilities_split] #trim whitespace
+    
+  return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
+
+def clean_training_data(dict):
+  """
+  Converts Dictionary with Pokemon's Training data into Dataframe
+  @param dict: the result of scrape_individual_page_data / the - hopefully - successfully HTML data scraped into dictionaries and dfs
+  @returns: dataframe with training data (# of rows equal to number of variants specific Pokemon has)
+  """
+
+  #predefine columns wanted in the ending df
+  column_names = ['Name', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate', 'EVYield']
+  main_df = pd.DataFrame(columns = column_names) #create empty df to append to
+  
+  for key in dict['Forms']:
+    
+    if bool(dict['Forms'][key]) ==False:
+      continue
+    
+    if 'ability' in key:
+      continue #skip to next loop if tab is for an ability interaction (ex: Pokemon with Water Absorb will have additional forms but on their type weaknesses matrix)
+    
+    df = dict['Forms'][key]['Training']
+    df = transpose_df(df)
+    
+    df['Name'] = key
+    df['CatchRatePerc'] = df['Catch rate'].str.split('(').str[0].replace('—', '0').astype(float) #splits off all char info, replace -s with 0s and convert to float
+    df['BaseFriendship'] = df['Base Friendship'].str.split('(').str[0].replace('—', '0').astype(float)
+    df['BaseExp'] = df['Base Exp.'].replace('—', '0').astype(float)
+
+    df.rename(columns=
+    {'EV yield': 'EVYield',
+     'Growth Rate': 'GrowthRate'}, inplace=True)
+
+    df = df[column_names]
+    main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)])
+    
+  return main_df
+
+def clean_breeding_data(dict):
+  """
+  Converts Dictionary with Pokemon's Breeding data into Dataframe
+  @param dict: the result of scrape_individual_page_data / the - hopefully - successfully HTML data scraped into dictionaries and dfs
+  @returns: dataframe with breeding data (# of rows equal to number of variants specific Pokemon has)
+  """
+  
+  column_names = ['Name', 'MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']
+  main_df = pd.DataFrame(columns = column_names)
+  
+  for key in dict['Forms']:
+    
+    if bool(dict['Forms'][key]) == False:
+      continue
+    
+    if 'ability' in key:
+      continue #skip to next loop if tab is for an ability iteration
+
+    
+    df = dict['Forms'][key]['Breeding']
+    df = transpose_df(df)
+  
+    df['Name'] = key
+    if df['Gender'].str.contains('Genderless|—').any(): #need different logic for genderless pokemon
+      df['MalePerc'] = 0 #can just automatically set male and female perc to 0
+      df['FemalePerc'] = 0
+    else: #otherwise use data from dictionary
+      df[['MalePerc', 'FemalePerc']] = df['Gender'].str.split(',', expand=True)
+      df['MalePerc'] = df['MalePerc'].str.split('%').str[0].astype(float)
+      df['FemalePerc'] = df['FemalePerc'].str.split('%').str[0].astype(float)
+
+    df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
+    df[['EggGroup1', 'EggGroup2']] = df['Egg Groups'].str.split(',', expand=True).reindex(columns=[0, 1])
+    df['EggGroup1'] = df['EggGroup1'].str.strip()
+    df['EggGroup2'] = df['EggGroup2'].fillna('').str.strip() #when there is no second egg group (NA) fill with blank value
+
+    df = df[column_names]
+    main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)])
+    
+  return main_df
+
+def clean_pokedex_flavor_text_data(dict):
+  """
+  Converts Dictionary with Pokedex Flavor Text data into Dataframe
+  @param dict: the result of scrape_individual_page_data / the - hopefully - successfully HTML data scraped into dictionaries and dfs
+  @returns: dataframe with pokemon's flavor text (# of rows equal to number of variants specific Pokemon has)
+  """
+  
+  df = pd.DataFrame(dict['Flavor Text']['Flavor Text'])
+  
+  df.columns = ['Game', 'FlavorText']
+  df = df.tail(1) #select last row
+  df = df[['FlavorText']] #only select one column
+  
+  return df
+
+def clean_move_data(dict):
+  """
+  Converts Dictionary with Pokemon's Available Moves into Dataframe
+  @param dict: the result of scrape_individual_page_data / the - hopefully - successfully HTML data scraped into dictionaries and dfs
+  @returns: dataframe with all pokemon's available moves across recent games
+  """
+
+  column_names = ['MoveName']
+  main_df = pd.DataFrame(data = ['Move'], columns = column_names)
+  
+  for key in dict['Moves']:
+    for item in range(len(dict['Moves'][key])):
+      df = pd.DataFrame(dict['Moves'][key][item])
+      df.rename(columns = {'Move': 'MoveName'}, inplace = True)
+      df = df[column_names]
+      
+      main_df = pd.concat([main_df, df])
+  
+  main_df = main_df.drop_duplicates() #only return distinct move names
+  
+  return main_df
+
+##### Augmenting Dataframes with new ETL created columns or creating said columns Functions #####
+
+def get_special_pokemon(choice):
+  """
+  Returns A list of pokemon under a special categorization
+  @param choice: 'Sublegendary', 'Legendary', 'Mythical' - semi fan generated categories for specific pokemon
+  @returns: returns list of Pokemon names for any of the different special pokemon categories
+  """
+
   match choice:
         case 'Sublegendary':
             poke_list = ['Articuno', 'Zapdos', 'Moltres',
@@ -132,6 +567,12 @@ def get_special_pokemon(choice):
   return poke_list
 
 def get_pokemon_gen(PokedexNbr):
+  """
+  Returns the generation the pokemon was introduced to depending on it's PokedexNbr
+  @param PokedexNbr: string value of the Pokemon's position in the national dex
+  @returns: number representing the pokemon's introduction generation
+  """
+
   converted = int(PokedexNbr)
 
   if(converted <= 151):
@@ -156,6 +597,12 @@ def get_pokemon_gen(PokedexNbr):
     return "Invalid Pokedex Number"
 
 def get_move_category(cat):
+  """
+  Returns a String (The Move Category) depending on jpg string entered
+  @param cat: a string that should reference one of the below .jpg image files
+  @returns: a simple move category string
+  """
+
   match cat:
     case 'https://img.pokemondb.net/images/icons/move-special.png':
       return 'Special'
@@ -166,370 +613,13 @@ def get_move_category(cat):
     case _:
       return 'None'
 
-# Function to split abilities into three columns
-def split_abilities(abilities):
-  abilities_split = abilities.split('|') #split ability string by delimiter
-  abilities_split = [ability.strip() for ability in abilities_split] #trim whitespace
-    
-  return pd.Series(abilities_split + [None] * (3 - len(abilities_split)))
-
-def scrape_flavor_text(soup):
-  header = soup.find('h2', string = 'Pokédex entries')
-  
-  flavor_text = {}
-  if header:
-    table = header.find_next('table')
-    rows = table.find_all('tr')
-    table_data = []
-    for row in rows:
-        cells = row.find_all(['td', 'th'])
-        cell_data = [cell.text.strip() for cell in cells]
-        table_data.append(cell_data)
-    # Ensure all rows have the same number of columns
-    max_columns = max(len(row) for row in table_data)
-    table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
-    df = pd.DataFrame(table_data)
-    flavor_text['Flavor Text'] = df
-  
-  else:
-    data = {'Game': ['None'],
-            'Flavor Text': ['Pokemon has no pokedex entry']}
-    df = pd.DataFrame(data)
-    flavor_text['Flavor Text'] = df
-  
-  return flavor_text
-
-def scrape_forms_data(soup):
-    form_tab_container = soup.find('div', {'class': 'tabset-basics'})
-    form_tabs = form_tab_container.select('a.sv-tabs-tab') if form_tab_container else []
-    form_data = {}
-
-    for tab in form_tabs:
-        form_name = tab.text.strip()
-        form_id = tab['href'].replace('#', '')  # e.g., 'tab-basic-475'
-        form_div = soup.find('div', {'id': form_id})
-
-        if not form_div:
-            continue  # Skip if the form's div is not found
-
-        # Scrape data for this form
-        form_tables = {}
-        headers_of_interest = ["Pokédex data", "Training", "Breeding"]
-        headers = form_div.find_all(['h2', 'h3'])
-
-        for header in headers:
-            header_text = header.text.strip()
-            if header_text in headers_of_interest:
-                table = header.find_next('table')
-                if table:
-                    rows = table.find_all('tr')
-                    table_data = []
-                    for row in rows:
-                        cells = row.find_all(['td', 'th'])
-                        cell_data = [cell.text.strip() for cell in cells]
-                        
-                        #Handle abilities piece specifically so we can separate them out later
-                        if header_text == "Pokédex data" and "Abilities" in cell_data:
-                            #Extract abilities and join them with a delimiter
-                            abilities = []
-                            ability_cells = row.find_all('td')
-                            for ability_cell in ability_cells:
-                                ability_links = ability_cell.find_all('a')
-                                for link in ability_links:
-                                    abilities.append(link.text.strip())
-                            #add delimiter
-                            cell_data = ["Abilities", "|".join(abilities)]
-                        
-                        table_data.append(cell_data)
-                    # Ensure all rows have the same number of columns
-                    max_columns = max(len(row) for row in table_data)
-                    table_data = [row + [''] * (max_columns - len(row)) for row in table_data]
-                    df = pd.DataFrame(table_data)
-                    form_tables[header_text] = df
-        
-        # Extract artwork URL
-        
-        img_tag = form_div.find('img', {'alt': re.compile(r'.artwork')})
-        img_url = img_tag['src'] if img_tag else None
-        form_tables['Artwork'] = img_url
-
-        # Store the form's data
-        form_data[form_name] = form_tables
-        
-    return form_data
-
-def scrape_evolution_data(soup):
-    """Scrape evolution chain data for the Pokémon."""
-    evo_tables = soup.find_all('div', {'class': 'infocard-list-evo'})
-    evolution_chains = []
-
-    for evo_table in evo_tables:
-        chain = []
-        elements = evo_table.find_all(['div', 'span'], recursive=False)
-
-        for element in elements:
-            if 'infocard' in element.get('class', []):
-                # Extract Pokémon data
-                pokemon_name_tag = element.find('a', {'class': 'ent-name'})
-                pokemon_name = pokemon_name_tag.text.strip() if pokemon_name_tag else 'Unknown'
-
-                pokemon_number_tag = element.find('small')
-                pokemon_number = pokemon_number_tag.text.strip() if pokemon_number_tag else 'Unknown'
-
-                pokemon_types = [a.text.strip() for a in element.find_all('a', {'class': 'itype'})]
-                chain.append({
-                    'Pokémon': pokemon_name,
-                    'Number': pokemon_number,
-                    'Types': pokemon_types,
-                    'Condition': None  # Default, will be updated if an arrow follows
-                })
-            elif 'infocard-arrow' in element.get('class', []):
-                # Extract evolution condition
-                condition = element.text.strip()
-                if chain:  # Attach condition to the previous Pokémon in the chain
-                    chain[-1]['Condition'] = condition
-
-        evolution_chains.append(chain)
-
-    return evolution_chains
-
-def scrape_moves_data(soup):
-    move_tab_container = soup.find('div', {'class': 'tabset-moves-game sv-tabs-wrapper'})
-    move_tabs = move_tab_container.select('a.sv-tabs-tab') if move_tab_container else []
-    move_data = {}
-
-    for tab in move_tabs:
-        tab_name = tab.text.strip()
-        tab_id = tab['href'].replace('#', '')  # e.g., 'tab-moves-21'
-        tab_div = soup.find('div', {'id': tab_id})
-
-        if not tab_div:
-            continue  # Skip if the tab's div is not found
-
-        # Scrape move tables for this tab
-        move_tables = []
-        tables = tab_div.find_all('table', {'class': 'data-table'})
-
-        for table in tables:
-            headers = [header.text.strip() for header in table.find_all('th')]
-            rows = table.find_all('tr')
-            table_data = []
-            for row in rows:
-                cells = row.find_all(['td', 'th'])
-                cell_data = []
-                for cell in cells:
-                    img = cell.find('img')
-                    if img:
-                        cell_data.append(img['src'])
-                    else:
-                        cell_data.append(cell.text.strip())
-                table_data.append(cell_data)
-            df = pd.DataFrame(table_data, columns=headers if headers else None)
-            move_tables.append(df)
-
-        # Store the move data for this tab
-        move_data[tab_name] = move_tables
-
-    return move_data
-
-def scrape_individual_page_data(url):
-    response = get_request_response(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    tables_dict = {}
-
-    # Scrape forms data
-    tables_dict['Forms'] = scrape_forms_data(soup)
-
-    # Scrape flavor text from pokemon entries
-    tables_dict['Flavor Text'] = scrape_flavor_text(soup)
-
-    # Scrape evolution data
-    tables_dict['Evolution_Chains'] = scrape_evolution_data(soup)
-
-    # Scrape moves data
-    tables_dict['Moves'] = scrape_moves_data(soup)
-
-    return tables_dict
-
-def transpose_df(df):
-    df = df.transpose()
-    df.columns = df.iloc[0] #set column names to values in row 1
-    df = df[1:] #remove row 1
-    return df
-
-def clean_artwork_data(dict):
-  column_names = ['Name', 'ArtworkURL']
-  main_dict = {}
-  
-  for key in dict['Forms']:
-    if bool(dict['Forms'][key]) == False:
-      continue
-    
-    main_dict[key] = dict['Forms'][key]['Artwork']
-  
-  df = pd.DataFrame(main_dict.items(), columns = column_names)
-  return df
-
-def clean_pokedex_entry_data(dict):
-  #predefine columns wanted in the ending df
-  column_names = ['Name', 'PokedexNbr', 'Type', 'Species', 'Height', 'Weight', 'Ability1', 'Ability2', 'Ability3']
-  main_df = pd.DataFrame(columns = column_names) #create empty df to append to
-  
-  #for every form at a single pokedex number
-  for key in dict['Forms']:
-    
-    # if there is no form information in the key
-    if bool(dict['Forms'][key]) == False: 
-      continue #skip to next for loop iteration
-    
-    if 'ability' in key:
-      continue #skip to next loop if tab is for an ability iteration
-    
-    df = dict['Forms'][key]['Pokédex data']
-    df = transpose_df(df)
-    
-    df['Name'] = key
-    df['Height'] = df['Height'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
-    df['Weight'] = df['Weight'].str.split(r'([a-z])').str[0].replace('—', '0').astype(float)
-    df[['Ability1', 'Ability2', 'Ability3']] = df['Abilities'].apply(split_abilities)
-    df['PokedexNbr'] = df['National №']
-    
-    df = df[column_names]
-    main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)]) #astype used to prevent future warning error
-  
-  return main_df
-
-def clean_training_data(dict):
-  #predefine columns wanted in the ending df
-  column_names = ['Name', 'CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate', 'EVYield']
-  main_df = pd.DataFrame(columns = column_names) #create empty df to append to
-  
-  for key in dict['Forms']:
-    
-    if bool(dict['Forms'][key]) ==False:
-      continue
-    
-    if 'ability' in key:
-      continue #skip to next loop if tab is for an ability iteration
-
-    
-    df = dict['Forms'][key]['Training']
-    df = transpose_df(df)
-    
-    df['Name'] = key
-    df['CatchRatePerc'] = df['Catch rate'].str.split('(').str[0].replace('—', '0').astype(float)
-    df['BaseFriendship'] = df['Base Friendship'].str.split('(').str[0].replace('—', '0').astype(float)
-    df['BaseExp'] = df['Base Exp.'].replace('—', '0').astype(float)
-
-    df.rename(columns=
-    {'EV yield': 'EVYield',
-     'Growth Rate': 'GrowthRate'}, inplace=True)
-
-    df = df[column_names]
-    main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)])
-    
-  return main_df
-
-def clean_breeding_data(dict):
-    column_names = ['Name', 'MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']
-    main_df = pd.DataFrame(columns = column_names)
-    
-    for key in dict['Forms']:
-      
-      if bool(dict['Forms'][key]) == False:
-        continue
-      
-      if 'ability' in key:
-        continue #skip to next loop if tab is for an ability iteration
-
-      
-      df = dict['Forms'][key]['Breeding']
-      df = transpose_df(df)
-    
-      df['Name'] = key
-      if df['Gender'].str.contains('Genderless|—').any():
-        df['MalePerc'] = 0
-        df['FemalePerc'] = 0
-      else:
-        df[['MalePerc', 'FemalePerc']] = df['Gender'].str.split(',', expand=True)
-        df['MalePerc'] = df['MalePerc'].str.split('%').str[0].astype(float)
-        df['FemalePerc'] = df['FemalePerc'].str.split('%').str[0].astype(float)
-  
-      df['EggCycles'] = df['Egg cycles'].str.split('(').str[0].replace('—', '0').astype(float)
-      df[['EggGroup1', 'EggGroup2']] = df['Egg Groups'].str.split(',', expand=True).reindex(columns=[0, 1])
-      df['EggGroup1'] = df['EggGroup1'].str.strip()
-      df['EggGroup2'] = df['EggGroup2'].fillna('').str.strip()
-
-      df = df[column_names]
-      main_df = pd.concat([main_df.astype(df.dtypes), df.astype(main_df.dtypes)])
-      
-    return main_df
-
-def clean_pokedex_flavor_text_data(dict):
-  df = pd.DataFrame(dict['Flavor Text']['Flavor Text'])
-  
-  df.columns = ['Game', 'FlavorText']
-  df = df.tail(1) #select last row
-  df = df[['FlavorText']] #only select one column
-  
-  return df
-
-def clean_evolution_data(dict):
-  res = {key: val for key, val in dict.items() if key.startswith('Evolution_Table_')}
-  if res == {}: #if there is no evolution for the pokemon
-    return None
-
-  data = []
-  for key in res:
-    temp = res[key]
-    data.append(temp)
-
-  df = pd.concat(data)
-  df = pd.DataFrame(df)
-
-  df.columns = ['Pokemon', 'Evolution']
-  df['Evolution'] = df['Evolution'].shift(1)
-  df = df.groupby('Pokemon').first()
-
-  return df
-
-def clean_move_data(dict):
-  column_names = ['MoveName']
-  main_df = pd.DataFrame(data = ['Move'], columns = column_names)
-  
-  for key in dict['Moves']:
-    for item in range(len(dict['Moves'][key])):
-      df = pd.DataFrame(dict['Moves'][key][item])
-      df.rename(columns = {'Move': 'MoveName'}, inplace = True)
-      df = df[column_names]
-      
-      main_df = pd.concat([main_df, df])
-  
-  main_df = main_df.drop_duplicates() #only return distinct move names
-  
-  return main_df
-
-def clean_individual_page_data(tables_data):
-    artwork_url = clean_artwork_data(tables_data) #artwork
-    entry_data = clean_pokedex_entry_data(tables_data) #pokedex
-    training_data = clean_training_data(tables_data) #training
-    breeding_data = clean_breeding_data(tables_data) #breeding
-    flavor_text_data = clean_pokedex_flavor_text_data(tables_data) #flavor text
-    
-    #evolution_data = clean_evolution_data(tables_data) #evolution
-    move_data = clean_move_data(tables_data) #moves
-
-    #combine as needed for sql table storage
-    dfs = [entry_data, training_data, breeding_data, artwork_url]
-    merged = reduce(lambda left, right: pd.merge(left, right, on = 'Name', how = 'left'), dfs)
-    
-    flavor_text_data = pd.concat([flavor_text_data] * len(merged), ignore_index=True) #add enough rows in order to add onto merged
-    merged = pd.concat([merged.reset_index(drop=True), flavor_text_data.reset_index(drop=True)], axis=1) #add flavor text to merged
-
-
-    return merged, move_data
-
 def augment_pokedex_data(pokedex):
+  """
+  Augments Basic Pokedex Information
+  @param pokedex: dataframe of General Pokedex info (Name, Typing, and Base Stats)
+  @returns: pokedex dataframe with additional formatting and columns attached
+  """
+
   pokedex[['Type1', 'Type2']] = pokedex['Type'].str.split(' ', expand=True, n=1) #split into two columns
   pokedex['Gen'] = pokedex['#'].apply(get_pokemon_gen) #pokemon generation
   pokedex['PokedexRowId'] = pokedex.index + 1
@@ -563,9 +653,16 @@ def augment_pokedex_data(pokedex):
   return pokedex
 
 def augment_move_data(moves):
+  """
+  Augments General Move Data Table
+  @param moves: dataframe of general move info (Move Name, Move Type, etc.)
+  @returns: moves dataframe with additional formatting and columns attached
+  """
+
   moves['Category'] = moves['Cat.'].apply(get_move_category)
-  moves['MoveRowId'] = moves.index + 1
+  moves['MoveRowId'] = moves.index + 1 #create primary key
   
+  #mainly renaming stuff
   moves.rename(columns =
     {'Name': 'MoveName',
      'Type': 'MoveType',
@@ -581,9 +678,15 @@ def augment_move_data(moves):
   return moves
 
 def augment_ability_data(abilities):
-  abilities['AbilityRowId'] = abilities.index + 1
+  """
+  Augments General Ability Data Table
+  @param abilities: dataframe of general ability info (Ability Name, Desc, etc.)
+  @returns: abilities dataframe with additional formatting and columns attached
+  """
+
+  abilities['AbilityRowId'] = abilities.index + 1 #create primary key
   abilities.rename(columns =
-     {'Name': 'AbilityName',
+     {'Name': 'AbilityName', #rename columns to match wanted SQL columns
       'Description': 'AbilityDesc',
       'Gen.': 'IntroGen'}, inplace = True)
       
@@ -591,7 +694,15 @@ def augment_ability_data(abilities):
   
   return abilities
 
+##### Create near finalized tables for to SQL Functions #####
+
 def create_move_category_table(moves):
+  """
+  Creates Table for dbo.MoveCategory
+  @param moves: dataframe with all pokemon moves
+  @returns: table with only a unique list of move categories
+  """
+
   move_category = pd.DataFrame()
   move_category['MoveCategoryDesc'] = moves['Category'].unique()
   move_category = move_category.sort_values(by = 'MoveCategoryDesc')
@@ -600,12 +711,22 @@ def create_move_category_table(moves):
   return move_category
 
 def create_base_stats_table(pokedex):
+  """
+  Creates Table for dbo.BaseStats
+  @param moves: dataframe with all pokemon variants and their base stats
+  @returns: table with the base stats of each pokemon variant
+  """
   base_stats = pokedex[['PokedexRowId', 'HP', 'Atk', 'Def', 'SpAtk', 'SpDef', 'Speed', 'Total']]
   
   return base_stats
 
 def get_type_ids():
-  #create fact table for different Pokemon Types
+  """
+  Creates Dictionary of Different Pokemon Types
+  @param null
+  @returns: dictionary that associates every pokemon type with a number
+  """
+
   type_ids = {
     "Normal": 1,
     "Fire": 2,
@@ -630,12 +751,23 @@ def get_type_ids():
   return type_ids
   
 def create_type_table():
+  """
+  Creates Table for dbo.Type
+  @param null
+  @returns: Dataframe with each type and a type id
+  """
+  
   type_ids = get_type_ids()
   types = pd.DataFrame(list(type_ids.items()), columns=['TypeName', 'TypeId'])
   
   return types
-  
+
 def create_type_effectiveness_table():
+  """Creates Table for dbo.TypeEffectiveness
+  @param null
+  @returns: table describing the relationship between attacking and defending types
+  """
+  
   type_ids = get_type_ids()
   
   #listing out any type effectiveness interactions that aren't 1-1 into a dictionary
@@ -675,11 +807,23 @@ def create_type_effectiveness_table():
   
   return type_effectiveness
 
-def create_breeding_table(individual_entries):
-  breeding = individual_entries[['MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
+def create_breeding_table(df):
+  """
+  Creates Table for dbo.Breeding
+  @param dataframe that contains Pokemon and their breeding data
+  @returns: table with all the breeding info for each pokemon variant
+  """
+  
+  breeding = df[['PokedexRowId', 'MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
   return breeding
 
 def create_egg_group_table(breeding):
+  """
+  Creates Table for dbo.EggGroup
+  @param dataframe of all Pokemon's breeding information
+  @returns: table listing out the possible egg groups Pokemon can have
+  """
+  
   #get distinct egg groups
   egg_groups = pd.unique(breeding[['EggGroup1', 'EggGroup2']].values.ravel('K'))
   
@@ -689,10 +833,14 @@ def create_egg_group_table(breeding):
   
   return egg_groups
 
-def create_training_table(individual_entries):
-  training = individual_entries[['CatchRatePerc', 'BaseFriendship', 'BaseExp', 'GrowthRate', 'EVYield']]
+def create_training_table(df):
+  """
+  Creates Table for dbo.Training
+  @param dataframe that contains all Pokemon's training information
+  @returns: table listing out the possible egg groups Pokemon can have
+  """
   
-  #convert EVYield into separate columns
+  #the goal is to convert EVYield into separate columns
   #create dictionary to match stat names to column names
   stat_mapping = {
     'HP': 'HPYield',
@@ -741,17 +889,20 @@ for pokedex_nbr, dfs in individual_pages.items():
   individual_entries.append(df)
 
 individual_entries = pd.concat(individual_entries)
+individual_entries['PokedexRowId'] = range(1, len(test) + 1) #add primary key
+combined = pd.merge(pokedex, individual_entries, on = ['PokedexNbr', 'PokedexRowId']) #combine with other pokedex information
 
-breeding = create_breeding_table(individual_entries)
+breeding = create_breeding_table(combined)
 egg_groups = create_egg_group_table(breeding)
-training = create_training_table(individual_entries)
+training = create_training_table(combined)
+dex = create_pokedex_table(combined)
 
+#TO DO:
+#attach foreign keys
+#breeding egggroupnames to egg group groupids
+#pokedex typenames to type typeid
+#moves category to move category movecategoryid
 
+#create PokemonAbilities and PokemonMoves intermediary tables
 
-
-
-
-
-
-
-
+#export to sql
