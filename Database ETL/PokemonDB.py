@@ -129,22 +129,6 @@ def scrape_ability_data(url):
   df = pd.DataFrame(ability_data)
   return df
 
-def get_special_pokemon(choice):
-  match choice:
-        case 'Sublegendary':
-            poke_list = ['Articuno', 'Zapdos', 'Moltres',
-                     'Raikou', 'Entei', 'Suicine',
-                     'Regirock', 'Regice', 'Registeel', 'Regieleki', 'Regidrago',
-                     'Latias', 'Latios',
-                     'Uxie', 'Mesprit', 'Azelf'
-                     'Heatran', 'Regigigas', 'Cresselia',
-                     'Colbalion', 'Terrakion', 'Virizion', 'Silvally',
-                     'Tornadus', 'Thundurus', 'Landorus', 'Enamorus',
-                     'Tapu Koko', 'Tapu Lele', 'Tapu Bulu', 'Tapu Fini',
-                     'Kubfu', 'Urshifu', 'Glastrier', 'Spectrier',
-                     'Wo-Chien', 'Chien-Pao', 'Ting-Lu', 'Chi-Yu',
-                     'Okidogi', 'Munkidori', 'Fezandipiti', 'Ogerpon']
-
 def scrape_individual_page_data(url):
   """
   Central Control for Scraping information from an individual pokemon's pokedex page
