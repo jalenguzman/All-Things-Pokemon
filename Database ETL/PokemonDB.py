@@ -934,6 +934,63 @@ def create_pokedex_table(df):
                 
   return pokedex
 
+def create_evolution_table(dict, pokedex):
+  """
+  Creates Table for dbo.Evolution
+  @param dict: dictionary where every element is a data table with evolution chain data
+  @param pokedex: dataframe that contains information about every pokemon with a possible evolution
+  @returns: table that details what pokemon evolve into what and under what conditions
+  """
+  
+  evotable = [] #empty object
+  static_columns = ['Evolving From Name', 'Evolving From Subname', 'Evolving To Name', 'Evolving To Subname'] #columns every evo df should have
+  separator = '; ' #for later :)
+
+  for key, value in dict.items():
+    df = value
+    
+    df = df.drop('', axis = 1)
+    varying_columns = [col for col in df.columns if col not in static_columns] #get names of varying columns
+    
+    if not varying_columns:
+      continue #if there's no varying columns then we know to skip this one
+    
+    #concatenate varying columns together into evolution requirement column
+    df['EvolutionRequirement'] = df[varying_columns].astype(str).agg(separator.join, axis=1).str.replace('nan', '').str.strip(separator) 
+    
+    #assign prefix for some additional info depending on key
+    match key:
+      case '/evolution/level':
+        prefix = 'Level to Lvl '
+      case '/evolution/stone':
+        prefix = 'Holding '
+      case '/evolution/trade':
+        prefix = 'Trade with ' 
+      case 'evolution/friendship':
+        prefix = 'High Friendship '
+      case _:
+        prefix = ''
+    
+    df['EvolutionRequirement'] = prefix + df['EvolutionRequirement'].astype(str)
+    
+    #select wanted columns
+    df = df[['Evolving From Name', 'Evolving From Subname', 'Evolving To Name', 'Evolving To Subname', 'EvolutionRequirement']]
+    evotable.append(df)
+  
+  evotable = pd.concat(evotable)
+  
+  evotable = pd.merge(evotable, pokedex, left_on = ['Evolving From Name', 'Evolving From Subname'], right_on = ['PokemonName', 'Subname'])
+  evotable.rename(columns={'PokedexRowId': 'EvolvesFromRowId'}, inplace = True)
+  evotable = evotable[['EvolvesFromRowId', 'Evolving To Name', 'Evolving To Subname', 'EvolutionRequirement']]
+  
+  evotable = pd.merge(evotable, pokedex, left_on = ['Evolving To Name', 'Evolving To Subname'], right_on = ['PokemonName', 'Subname'])
+  evotable.rename(columns={'PokedexRowId': 'EvolvesToRowId'}, inplace = True)
+  evotable = evotable[['EvolvesFromRowId', 'EvolvesToRowId', 'EvolutionRequirement']]
+  
+  evotable['EvolutionId'] = range(len(evotable)) #create key
+  
+  return evotable
+
 def create_pokemonabilities_table(df, abilities):
   """
   Creates Table for dbo.PokemonAbilities
