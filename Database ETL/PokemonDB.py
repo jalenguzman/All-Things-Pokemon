@@ -1089,6 +1089,7 @@ breeding = create_breeding_table(combined)
 egg_groups = create_egg_group_table(breeding)
 training = create_training_table(combined)
 dex = create_pokedex_table(combined)
+create_evolution_table(evochains, dex)
 
 #breeding egggroupnames to egg group groupids
 #moves category to move category movecategoryid
