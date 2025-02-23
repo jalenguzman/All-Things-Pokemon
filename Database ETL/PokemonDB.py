@@ -716,6 +716,7 @@ def augment_move_data(moves):
 
   moves = moves[['MoveRowId', 'MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
                'MovePowerPoints', 'MoveDesc', 'EffectProbability']]
+  moves = moves.replace('—', None) #replace just -s with nulls
   
   return moves
 
