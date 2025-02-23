@@ -921,7 +921,15 @@ def create_pokedex_table(df):
   @returns: table that will be central to sql database
   """
   
-  pokedex = df[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'Type1', 'Type2', 'Height', 'Weight', 'FlavorText', 'Gen', 
+  type_ids = get_type_ids()
+  df = df.replace({'Type1': type_ids, 'Type2': type_ids})
+  
+  df.rename(columns =
+    {'Type1': 'PokemonType1Id',
+     'Type2': 'PokemonType2Id'}, inplace = True)
+  
+  #really just sorting out columns to only those wanted
+  pokedex = df[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'PokemonType1Id', 'PokemonType2Id', 'Height', 'Weight', 'FlavorText', 'Gen', 
                 'IsMega', 'IsRegionVariant', 'IsAdditionalVariant', 'IsSubLegendary', 'IsMythical', 'IsLegendary', 'ArtworkURL']]
                 
   return pokedex
