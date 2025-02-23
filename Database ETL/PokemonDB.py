@@ -990,6 +990,7 @@ def create_pokemonmoves_table(dict, moves):
 
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
+evochains = scrape_evolution_data('https://pokemondb.net/evolution')
 moves = scrape_move_data('https://pokemondb.net/move/all')
 abilities = scrape_ability_data('https://pokemondb.net/ability')
 
@@ -1024,7 +1025,7 @@ for pokedex_nbr, dfs in individual_pages.items():
   individual_entries.append(df)
 
 individual_entries = pd.concat(individual_entries)
-individual_entries['PokedexRowId'] = range(1, len(test) + 1) #add primary key
+individual_entries['PokedexRowId'] = range(1, len(individual_entries) + 1) #add primary key
 combined = pd.merge(pokedex, individual_entries, on = ['PokedexNbr', 'PokedexRowId']) #combine with other pokedex information
 
 breeding = create_breeding_table(combined)
