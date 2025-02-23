@@ -934,6 +934,60 @@ def create_pokedex_table(df):
                 
   return pokedex
 
+def create_pokemonabilities_table(df, abilities):
+  """
+  Creates Table for dbo.PokemonAbilities
+  @param df: dataframe where each row is basic information (including ability info) for each pokemon variant
+  @param abilities: dataframe that contains information about every possible pokemon ability
+  @returns: table that connects ability descriptions with pokemon in the pokedex
+  """
+
+  #selecting columns for basis
+  pkabilities = df[['PokedexRowId', 'Ability1', 'Ability2', 'Ability3']] 
+  
+  pkabilities = pkabilities.melt(['PokedexRowId']).sort_values(['PokedexRowId', 'variable']) #melt df and sort by (rowid & abilitynum)
+  pkabilities = pkabilities[pkabilities['value'].notnull()] #remove rows that don't have ability name
+  
+  #creating new columns
+  pkabilities['AbilitySlotNbr'] = pkabilities['variable'].str.replace('Ability', '').astype(int)
+  pkabilities['Max'] = pkabilities.groupby('PokedexRowId')['AbilitySlotNbr'].transform('max') #get the number of abilities per pokedexrowid
+  
+  #if ability is in the final slot (the max number of abilities the pokemon has) then label as hidden
+  pkabilities.loc[pkabilities['AbilitySlotNbr'] == pkabilities['Max'], 'IsHidden'] = True
+  pkabilities.loc[pkabilities['AbilitySlotNbr'] != pkabilities['Max'], 'IsHidden'] = False
+  pkabilities.loc[pkabilities['AbilitySlotNbr'] == 1, 'IsHidden'] = False #unless it's their 1 and only ability then we know its not hidden
+  
+  #merge to get abilityrowid key 
+  pkabilities = pd.merge(pkabilities, abilities, left_on = 'value', right_on = 'AbilityName', how = 'left')
+  
+  #select needed columns
+  pkabilities = pkabilities[['PokedexRowId', 'AbilityRowId', 'IsHidden', 'AbilitySlotNbr']]
+  
+  return pkabilities
+
+def create_pokemonmoves_table(dict, moves):
+  """
+  Creates Table for dbo.PokemonMoves
+  @param dict: where every 'df_2' has a list of every move a pokemon can learn
+  @param moves: dataframe that contains information about every possible pokemon move
+  @returns: table that connects move descriptions with pokemon in the pokedex
+  """
+
+  pkmoves = [] #empty object time :)
+  
+  for pokedex_nbr, dfs in dict.items(): #for every item in dictionary
+    df = dfs.get('df_2') #look at the second df in each key
+    df['PokedexNbr'] = pokedex_nbr
+    pkmoves.append(df)
+    
+  pkmoves = pd.concat(pkmoves)
+  
+  pkmoves = pd.merge(pkmoves, moves, how = 'left') #merge with moves data for other key
+  pkmoves = pkmoves[pkmoves['MoveRowId'].notna()] #remove any moves that we do not have info for
+  
+  pkmoves = pkmoves[['PokedexNbr', 'MoveRowId']]
+  return pkmoves
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 moves = scrape_move_data('https://pokemondb.net/move/all')
@@ -978,12 +1032,12 @@ egg_groups = create_egg_group_table(breeding)
 training = create_training_table(combined)
 dex = create_pokedex_table(combined)
 
-#TO DO:
-#attach foreign keys
 #breeding egggroupnames to egg group groupids
-#pokedex typenames to type typeid
 #moves category to move category movecategoryid
+#moves type id
 
 #create PokemonAbilities and PokemonMoves intermediary tables
+pkabilities = create_pokemonabilities_table(combined, abilities)
+pkmoves = create_pokemonmoves_table(individual_pages, moves)
 
 #export to sql
