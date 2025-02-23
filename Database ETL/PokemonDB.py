@@ -771,6 +771,7 @@ def get_type_ids():
   """
 
   type_ids = {
+    None: 0,
     "Normal": 1,
     "Fire": 2,
     "Water": 3,
