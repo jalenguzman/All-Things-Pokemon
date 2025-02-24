@@ -54,7 +54,7 @@ ALTER TABLE "MoveCategory" ADD PRIMARY KEY("MoveCategoryId");
 -- a fact table describing every Pokemon type
 CREATE TABLE "Type"(
     "TypeId" SMALLINT NOT NULL,
-    "TypeName" VARCHAR(10) NOT NULL
+    "TypeName" VARCHAR(10) NULL
 );
 ALTER TABLE "Type" ADD PRIMARY KEY("TypeId");
 
