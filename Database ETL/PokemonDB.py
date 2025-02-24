@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup #soup.find() #BeautifulSoup()
 import re #re.findall() #re.search()
 import itertools #itertools.product()
 from functools import reduce #reduce()
+from sqlalchemy import create_engine #create_engine()
 
 def get_request_response(url):
   """
@@ -1099,51 +1100,48 @@ moves = scrape_move_data('https://pokemondb.net/move/all')
 abilities = scrape_ability_data('https://pokemondb.net/ability')
 
 pokedex = augment_pokedex_data(pokedex)
-moves = augment_move_data(moves)
 abilities = augment_ability_data(abilities)
 
-move_category = create_move_category_table(moves)
-base_stats = create_base_stats_table(pokedex)
+#get data from pokemon's individual pages
+individual_pages = get_individual_page_data(pokedex)
+combined = get_full_pokedex_data(individual_pages, pokedex)
 
+base_stats = create_base_stats_table(pokedex)
 types = create_type_table()
 type_effectiveness = create_type_effectiveness_table()
 
-#dictionary of dictionaries storage
-individual_pages = {}
+move_info = augment_move_data
+moves = move_info[0]
+move_category = move_info[1]
 
-#for every pokemon get their specific page info
-for idx, row in pokedex.iterrows():
-  pokedex_nbr = row['PokedexNbr']
-  url = f'https://pokemondb.net/pokedex/{pokedex_nbr}'
-  tables_data = scrape_individual_page_data(url)
-  clean_tables = clean_individual_page_data(tables_data)
+breeding_info = create_breeding_tables(combined)
+breeding = breeding_info[0]
+egg_groups = breeding_info[1]
 
-  individual_pages[pokedex_nbr] = {
-        f'df_{i+1}': df for i, df in enumerate(clean_tables)
-    }
-
-individual_entries = []
-
-for pokedex_nbr, dfs in individual_pages.items():
-  df = dfs.get('df_1')
-  individual_entries.append(df)
-
-individual_entries = pd.concat(individual_entries)
-individual_entries['PokedexRowId'] = range(1, len(individual_entries) + 1) #add primary key
-combined = pd.merge(pokedex, individual_entries, on = ['PokedexNbr', 'PokedexRowId']) #combine with other pokedex information
-
-breeding = create_breeding_table(combined)
-egg_groups = create_egg_group_table(breeding)
 training = create_training_table(combined)
 dex = create_pokedex_table(combined)
-create_evolution_table(evochains, dex)
-
-#breeding egggroupnames to egg group groupids
-#moves category to move category movecategoryid
-#moves type id
+evolutions = create_evolution_table(evochains, dex)
 
 #create PokemonAbilities and PokemonMoves intermediary tables
 pkabilities = create_pokemonabilities_table(combined, abilities)
 pkmoves = create_pokemonmoves_table(individual_pages, moves)
 
-#export to sql
+#connect to postgresql
+psql_engine = create_engine("postgresql+psycopg2://postgres:admin@127.0.0.1:5432/PokemonDB")
+
+#order matters
+types.to_sql('Type', con=psql_engine, if_exists='append', index=False)
+dex.to_sql('Pokedex', con=psql_engine, if_exists='append', index=False)
+base_stats.to_sql('BaseStats', con=psql_engine, if_exists='append', index=False)
+evolutions.to_sql('Evolution', con=psql_engine, if_exists='append', index=False)
+abilities.to_sql('Abilities', con=psql_engine, if_exists='append', index=False)
+move_category.to_sql('MoveCategory', con=psql_engine, if_exists='append', index=False)
+moves.to_sql('Moves', con=psql_engine, if_exists='append', index=False)
+pkabilities.to_sql('PokemonAbilities', con=psql_engine, if_exists='append', index=False)
+pkmoves.to_sql('PokemonMoves', con=psql_engine, if_exists='append', index=False)
+type_effectiveness.to_sql('TypeEffectiveness', con=psql_engine, if_exists='append', index=False)
+training.to_sql('Training', con=psql_engine, if_exists='append', index=False)
+egg_groups.to_sql('EggGroup', con=psql_engine, if_exists='append', index=False)
+breeding.to_sql('Breeding', con=psql_engine, if_exists='append', index=False)
+
+psql_engine.dispose()
