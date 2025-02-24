@@ -3,7 +3,7 @@ CREATE TABLE "Pokedex"(
     "PokedexRowId" SMALLINT NOT NULL,
     "PokedexNbr" CHAR(4) NOT NULL, --national dex
     "PokemonName" VARCHAR(20) NOT NULL,
-    "Subname" VARCHAR(20) NOT NULL,
+    "Subname" VARCHAR(25) NULL,
     "SpeciesName" VARCHAR(30) NOT NULL,
     "PokemonType1Id" SMALLINT NOT NULL,
     "PokemonType2Id" SMALLINT NOT NULL,
