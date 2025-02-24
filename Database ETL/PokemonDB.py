@@ -1035,6 +1035,7 @@ def create_pokemonabilities_table(df, abilities):
   
   #select needed columns
   pkabilities = pkabilities[['PokedexRowId', 'AbilityRowId', 'IsHidden', 'AbilitySlotNbr']]
+  pkabilities = pkabilities[pkabilities['AbilityRowId'].notnull()]#remove any nulls
   
   return pkabilities
 
