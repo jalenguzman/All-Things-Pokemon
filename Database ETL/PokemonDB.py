@@ -701,24 +701,30 @@ def augment_move_data(moves):
   @returns: moves dataframe with additional formatting and columns attached
   """
 
-  moves['Category'] = moves['Cat.'].apply(get_move_category)
+  moves['MoveCategoryDesc'] = moves['Cat.'].apply(get_move_category)
   moves['MoveRowId'] = moves.index + 1 #create primary key
   
+  move_category = create_move_category_table(moves)
+  moves = pd.merge(moves, move_category)
+  
+  type_ids = get_type_ids()
+  moves = moves.replace({'Type': type_ids}) #map types to typeids
+
   #mainly renaming stuff
   moves.rename(columns =
     {'Name': 'MoveName',
-     'Type': 'MoveType',
+     'Type': 'MoveTypeId',
      'Power': 'MovePower',
      'Acc.': 'MoveAccuracy',
      'PP': 'MovePowerPoints',
      'Effect': 'MoveDesc',
      'Prob. (%)': 'EffectProbability'}, inplace = True)
-
-  moves = moves[['MoveRowId', 'MoveName', 'MoveType', 'Category', 'MovePower', 'MoveAccuracy',
+  
+  moves = moves[['MoveRowId', 'MoveName', 'MoveTypeId', 'MoveCategoryId', 'MovePower', 'MoveAccuracy',
                'MovePowerPoints', 'MoveDesc', 'EffectProbability']]
   moves = moves.replace('—', None) #replace just -s with nulls
   
-  return moves
+  return moves, move_category
 
 def augment_ability_data(abilities):
   """
@@ -747,7 +753,7 @@ def create_move_category_table(moves):
   """
 
   move_category = pd.DataFrame()
-  move_category['MoveCategoryDesc'] = moves['Category'].unique()
+  move_category['MoveCategoryDesc'] = moves['MoveCategoryDesc'].unique()
   move_category = move_category.sort_values(by = 'MoveCategoryDesc')
   move_category['MoveCategoryId'] = range(len(move_category))
   
