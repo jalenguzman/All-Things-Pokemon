@@ -121,7 +121,7 @@ ALTER TABLE "Evolution" ADD PRIMARY KEY("EvolutionId");
 
 -- used to connect pokedex entries to their viable moves
 CREATE TABLE "PokemonMoves"(
-    "PokedexNbr" SMALLINT NOT NULL,
+    "PokedexNbr" CHAR(4) NOT NULL,
     "MoveRowId" SMALLINT NOT NULL
 );
 ALTER TABLE "PokemonMoves" ADD PRIMARY KEY("PokedexNbr", "MoveRowId");
