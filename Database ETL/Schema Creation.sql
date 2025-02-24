@@ -143,24 +143,23 @@ ALTER TABLE "BaseStats" ADD PRIMARY KEY("PokedexRowId");
 ALTER TABLE "PokemonAbilities" ADD CONSTRAINT "pokemonabilities_abilityrowid_foreign" FOREIGN KEY("AbilityRowId") REFERENCES "Abilities"("AbilityRowId"); -- PokemonAbilities.AbilityRowId N-->1 Abilities.AbilityRowId
 ALTER TABLE "PokemonAbilities" ADD CONSTRAINT "pokemonabilities_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "Pokedex"("PokedexRowId"); -- PokemonAbilities.PokedexRowId N-->1 Pokedex.PokedexRowId
 
-ALTER TABLE "PokemonMoves" ADD CONSTRAINT "pokemonmoves_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "Pokedex"("PokedexRowId"); -- PokemonMoves.PokedexRowId N-->1 Pokedex.PokedexRowId
 ALTER TABLE "PokemonMoves" ADD CONSTRAINT "pokemonmoves_moverowid_foreign" FOREIGN KEY("MoveRowId") REFERENCES "Moves"("MoveRowId"); -- PokemonMoves.MoveRowId N-->1 Moves.MoveRowId
 
 ALTER TABLE "Moves" ADD CONSTRAINT "moves_movetypeid_foreign" FOREIGN KEY("MoveTypeId") REFERENCES "Type"("TypeId"); -- Moves.MoveTypeId N-->1 Type.TypeId
 ALTER TABLE "Moves" ADD CONSTRAINT "moves_movecategoryid_foreign" FOREIGN KEY("MoveCategoryId") REFERENCES "MoveCategory"("MoveCategoryId"); --Moves.MoveCategoryId N-->1 MoveCategory.MoveCategoryId
 
 ALTER TABLE "Evolution" ADD CONSTRAINT "evolution_evolvesfromrowid_foreign" FOREIGN KEY("EvolvesFromRowId") REFERENCES "Pokedex"("PokedexRowId"); -- Evolution.EvolvesFromRowId N-->1 Pokedex.PokedexRowId
-ALTER TABLE "Evolution" ADD CONSTRAINT "evolution_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "Pokedex"("PokedexRowId"); -- Evolution.PokedexRowId N-->1 Pokedex.PokedexRowId
+ALTER TABLE "Evolution" ADD CONSTRAINT "evolution_pokedexrowid_foreign" FOREIGN KEY("EvolvesToRowId") REFERENCES "Pokedex"("PokedexRowId"); -- Evolution.PokedexRowId N-->1 Pokedex.PokedexRowId
 
 ALTER TABLE "Training" ADD CONSTRAINT "training_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "Pokedex"("PokedexRowId"); -- Training.PokedexRowId 1<-->1 Pokedex.PokedexRowId
+ALTER TABLE "BaseStats" ADD CONSTRAINT "basestats_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "Pokedex"("PokedexRowId"); --Pokedex.PokedexRowId 1<-->1 BaseStats.PokedexRowId
 
+ALTER TABLE "Breeding" ADD CONSTRAINT "breeding_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "Pokedex"("PokedexRowId"); --Pokedex.PokedexRowId 1<-->1 Breeding.PokedexRowId
 ALTER TABLE "Breeding" ADD CONSTRAINT "breeding_egggroup1id_foreign" FOREIGN KEY("EggGroup1Id") REFERENCES "EggGroup"("EggGroupId"); -- Breeding.EggGroup1Id N-->1 EggGroup.EggGroupId
 ALTER TABLE "Breeding" ADD CONSTRAINT "breeding_egggroup2id_foreign" FOREIGN KEY("EggGroup2Id") REFERENCES "EggGroup"("EggGroupId"); --Breeding.EggGroup2Id N-->1 EggGroup.EggGroupId
 
 ALTER TABLE "Pokedex" ADD CONSTRAINT "pokedex_pokemontype1id_foreign" FOREIGN KEY("PokemonType1Id") REFERENCES "Type"("TypeId"); -- Pokedex.PokemonType1Id N-->1 Type.TypeId
 ALTER TABLE "Pokedex" ADD CONSTRAINT "pokedex_pokemontype2id_foreign" FOREIGN KEY("PokemonType2Id") REFERENCES "Type"("TypeId"); -- Pokedex.PokemonType2Id N-->1 Type.TypeId
-ALTER TABLE "Pokedex" ADD CONSTRAINT "pokedex_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "Breeding"("PokedexRowId"); --Pokedex.PokedexRowId 1<-->1 Breeding.PokedexRowId
-ALTER TABLE "Pokedex" ADD CONSTRAINT "pokedex_pokedexrowid_foreign" FOREIGN KEY("PokedexRowId") REFERENCES "BaseStats"("PokedexRowId"); --Pokedex.PokedexRowId 1<-->1 BaseStats.PokedexRowId
 
 ALTER TABLE "TypeEffectiveness" ADD CONSTRAINT "typeeffectiveness_attackingtypeid_foreign" FOREIGN KEY("AttackingTypeId") REFERENCES "Type"("TypeId"); --TypeEffectiveness.AttackingTypeId N-->1 Type.TypeId
 ALTER TABLE "TypeEffectiveness" ADD CONSTRAINT "typeeffectiveness_defendingtypeid_foreign" FOREIGN KEY("DefendingTypeId") REFERENCES "Type"("TypeId"); --TypeEffectiveness.DefendingTypeId N-->1 Type.TypeId
