@@ -47,7 +47,7 @@ ALTER TABLE "Abilities" ADD PRIMARY KEY("AbilityRowId");
 -- a fact table for describing moves as either physical / special / status / other
 CREATE TABLE "MoveCategory"(
     "MoveCategoryId" SMALLINT NOT NULL,
-    "MoveCategoryDesc" VARCHAR(255) NOT NULL
+    "MoveCategoryDesc" VARCHAR(10) NOT NULL
 );
 ALTER TABLE "MoveCategory" ADD PRIMARY KEY("MoveCategoryId");
 
