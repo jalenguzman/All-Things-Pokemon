@@ -28,7 +28,7 @@ CREATE TABLE "Moves"(
     "MoveTypeId" SMALLINT NOT NULL,
     "MoveCategoryId" SMALLINT NOT NULL,
     "MovePower" SMALLINT NULL,
-    "MoveAccuracy" SMALLINT NULL,
+    "MoveAccuracy" VARCHAR(5) NULL,
     "MovePowerPoints" SMALLINT NULL,
     "MoveDesc" VARCHAR(255) NOT NULL,
     "EffectProbability" SMALLINT NULL
