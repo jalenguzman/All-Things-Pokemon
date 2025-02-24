@@ -1062,6 +1062,36 @@ def create_pokemonmoves_table(dict, moves):
   pkmoves = pkmoves[['PokedexNbr', 'MoveRowId']]
   return pkmoves
 
+def get_individual_page_data(df):
+  #dictionary of dictionaries storage
+  individual_pages = {}
+  
+  #for every pokemon get their specific page info
+  for idx, row in pokedex.iterrows():
+    pokedex_nbr = row['PokedexNbr']
+    url = f'https://pokemondb.net/pokedex/{pokedex_nbr}'
+    tables_data = scrape_individual_page_data(url)
+    clean_tables = clean_individual_page_data(tables_data)
+  
+    individual_pages[pokedex_nbr] = {
+          f'df_{i+1}': df for i, df in enumerate(clean_tables)
+      }
+  
+  return individual_pages
+
+def get_full_pokedex_data(individual_pages, pokedex):
+  individual_entries = []
+
+  for pokedex_nbr, dfs in individual_pages.items():
+    df = dfs.get('df_1')
+    individual_entries.append(df)
+  
+  individual_entries = pd.concat(individual_entries)
+  individual_entries['PokedexRowId'] = range(1, len(individual_entries) + 1) #add primary key
+  combined = pd.merge(pokedex, individual_entries, on = ['PokedexNbr', 'PokedexRowId']) #combine with other pokedex information
+  
+  return combined
+
 #call comprehensive scrape functions
 pokedex = scrape_pokedex_data('https://pokemondb.net/pokedex/all')
 evochains = scrape_evolution_data('https://pokemondb.net/evolution')
