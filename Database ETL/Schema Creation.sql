@@ -113,8 +113,8 @@ ALTER TABLE "Training" ADD PRIMARY KEY("PokedexRowId");
 -- holds information about what pokemon things evolve from and what the requirement was to get them to evolve
 CREATE TABLE "Evolution"(
     "EvolutionId" SMALLINT NOT NULL,
-    "PokedexRowId" SMALLINT NOT NULL,
-    "EvolvesFromRowId" SMALLINT NULL,
+    "EvolvesFromRowId" SMALLINT NOT NULL,
+    "EvolvesToRowId" SMALLINT NOT NULL,
     "EvolutionRequirement" VARCHAR(255) NULL
 );
 ALTER TABLE "Evolution" ADD PRIMARY KEY("EvolutionId");
