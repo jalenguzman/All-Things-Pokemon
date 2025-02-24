@@ -11,13 +11,13 @@ CREATE TABLE "Pokedex"(
     "Weight" DECIMAL(8, 2) NOT NULL,
     "FlavorText" VARCHAR(255) NOT NULL,
     "Gen" SMALLINT NOT NULL,
-    "IsMega" BIT NOT NULL,
-    "IsRegionVariant" BIT NOT NULL,
-    "IsAdditionalVariant" BIT NOT NULL,
-    "IsSubLegendary" BIT NOT NULL,
-    "IsMythical" BIT NOT NULL,
-    "IsLegendary" BIT NOT NULL,
-    "ArtworkURL" VARCHAR(255) NOT NULL
+    "IsMega" BOOLEAN NOT NULL,
+    "IsRegionVariant" BOOLEAN NOT NULL,
+    "IsAdditionalVariant" BOOLEAN NOT NULL,
+    "IsSubLegendary" BOOLEAN NOT NULL,
+    "IsMythical" BOOLEAN NOT NULL,
+    "IsLegendary" BOOLEAN NOT NULL,
+    "ArtworkURL" VARCHAR(255) NULL
 );
 ALTER TABLE "Pokedex" ADD PRIMARY KEY("PokedexRowId");
 
@@ -78,7 +78,7 @@ ALTER TABLE "TypeEffectiveness" ADD PRIMARY KEY("TypeEffectivenessId");
 CREATE TABLE "PokemonAbilities"(
     "PokedexRowId" SMALLINT NOT NULL,
     "AbilityRowId" SMALLINT NOT NULL,
-    "IsHidden" BIT NOT NULL,
+    "IsHidden" BOOLEAN NOT NULL,
     "AbilitySlotNbr" SMALLINT NOT NULL --1,2, or 3
 );
 ALTER TABLE "PokemonAbilities" ADD PRIMARY KEY("PokedexRowId", "AbilityRowId");
