@@ -857,15 +857,24 @@ def create_type_effectiveness_table():
   
   return type_effectiveness
 
-def create_breeding_table(df):
+def create_breeding_tables(df):
   """
   Creates Table for dbo.Breeding
   @param dataframe that contains Pokemon and their breeding data
   @returns: table with all the breeding info for each pokemon variant
   """
-  
   breeding = df[['PokedexRowId', 'MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1', 'EggGroup2']]
-  return breeding
+  
+  egg_groups = create_egg_group_table(breeding)
+  breeding = pd.merge(breeding, egg_groups, left_on = 'EggGroup1', right_on = 'EggGroupDesc', how = 'left')
+  breeding.rename(columns = {'EggGroupId': 'EggGroup1Id'}, inplace = True)
+  
+  breeding = pd.merge(breeding, egg_groups, left_on = 'EggGroup2', right_on = 'EggGroupDesc', how = 'left')
+  breeding.rename(columns = {'EggGroupId': 'EggGroup2Id'}, inplace = True)
+  
+  breeding = breeding[['PokedexRowId', 'MalePerc', 'FemalePerc', 'EggCycles', 'EggGroup1Id', 'EggGroup2Id']]
+  
+  return breeding, egg_groups
 
 def create_egg_group_table(breeding):
   """
