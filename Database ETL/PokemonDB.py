@@ -941,10 +941,11 @@ def create_pokedex_table(df):
   
   df.rename(columns =
     {'Type1': 'PokemonType1Id',
-     'Type2': 'PokemonType2Id'}, inplace = True)
+     'Type2': 'PokemonType2Id',
+     'Species': 'SpeciesName'}, inplace = True)
   
   #really just sorting out columns to only those wanted
-  pokedex = df[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'PokemonType1Id', 'PokemonType2Id', 'Height', 'Weight', 'FlavorText', 'Gen', 
+  pokedex = df[['PokedexRowId', 'PokedexNbr', 'PokemonName', 'Subname', 'SpeciesName', 'PokemonType1Id', 'PokemonType2Id', 'Height', 'Weight', 'FlavorText', 'Gen', 
                 'IsMega', 'IsRegionVariant', 'IsAdditionalVariant', 'IsSubLegendary', 'IsMythical', 'IsLegendary', 'ArtworkURL']]
                 
   return pokedex
