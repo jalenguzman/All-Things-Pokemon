@@ -14,6 +14,7 @@ SELECT
 FROM public."Pokedex" AS P
 	LEFT JOIN public."BaseStats" AS BS ON P."PokedexRowId" = BS."PokedexRowId"
 WHERE P."Gen" = 9
+	-- include regional variants whose original form may not have been released in Gen9
 	OR (P."IsRegionVariant" = True AND LOWER(P."Subname") LIKE 'paldean%'))
 
 SELECT CONCAT('Gen 3 Avg BST: ', ROUND(AVG(BSTotal), 2)) FROM Gen3
